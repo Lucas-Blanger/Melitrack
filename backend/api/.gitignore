@@ -1,1 +1,16 @@
+
 venv/
+.venv/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+
+# Variáveis de ambiente
+.env
+
+# Configurações do VSCode
+.vscode/
+
+# Arquivos de log
+*.log
