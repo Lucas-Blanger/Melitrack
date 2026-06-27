@@ -1,3 +1,10 @@
 fastapi
 pytest
 uvicorn[standard]
+sqlalchemy
+asyncpg
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-jose[cryptography]
+pydantic-settings
+email-validator
