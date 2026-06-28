@@ -1,0 +1,38 @@
+@baseUrl = http://localhost:8000
+
+@name = Lucas
+@email = lucas2@email.com
+@password = 12345678
+
+###
+
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "{{name}}",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+###
+
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+###
+
+@accessToken = {{login.response.body.access_token}}
+
+###
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Cookie: session={{accessToken}}
