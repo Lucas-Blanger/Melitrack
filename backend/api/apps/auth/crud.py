@@ -4,6 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import User
 from .schemas import UserRegister, UserUpdate
+from core.logger import get_logger
+
+logger = get_logger()
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
@@ -30,6 +33,7 @@ async def create_user(db: AsyncSession, user_in: UserRegister) -> User:
         await db.commit()
         await db.refresh(new_user)
     except IntegrityError:
+        logger.exception("Failed to create user due to IntegrityError")
         await db.rollback()
         raise
 
@@ -51,6 +55,7 @@ async def update_user(
         await db.commit()
         await db.refresh(user)
     except IntegrityError:
+        logger.exception("Failed to update user due to IntegrityError")
         await db.rollback()
         raise
 
