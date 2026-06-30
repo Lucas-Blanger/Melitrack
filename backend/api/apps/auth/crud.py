@@ -6,7 +6,7 @@ from .models import User
 from .schemas import UserRegister, UserUpdate
 from core.logger import get_logger
 
-logger = get_logger()
+logger = get_logger(__name__)
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:

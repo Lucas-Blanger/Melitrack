@@ -8,7 +8,7 @@ from apps.auth.routes import router as auth_router
 from apps.health_service.routes.health_routes import router as health_router
 from core.logger import get_logger
 
-logger = get_logger()
+logger = get_logger(__name__)
 settings = get_settings()
 
 app = FastAPI(

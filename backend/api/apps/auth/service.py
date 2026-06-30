@@ -9,7 +9,7 @@ from .models import User
 from .schemas import UserRegister, UserLogin
 from . import crud
 
-logger = get_logger()
+logger = get_logger(__name__)
 
 
 class AuthService:
