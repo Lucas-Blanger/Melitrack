@@ -6,7 +6,10 @@ from jose import jwt
 
 from config import get_settings
 
-settings = get_settings()
+
+def _settings():
+    return get_settings()
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -22,7 +25,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-
+    settings = _settings()
     to_encode = data.copy()
 
     if expires_delta:
@@ -40,5 +43,5 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def decode_access_token(token: str) -> dict:
-
+    settings = _settings()
     return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
