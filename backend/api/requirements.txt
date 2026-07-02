@@ -10,3 +10,5 @@ pydantic-settings
 email-validator
 pytest-asyncio
 httpx
+motor
+python-multipart

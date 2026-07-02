@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     # Database URL
     DATABASE_URL: str | None = None
 
+    # Mongo DB config
+    MONGO_PORT: int
+    MONGO_USER: str
+    MONGO_PASSWORD: str
+    MONGO_URL: str
+    MONGO_DB: str
+
     # Security
     SECRET_KEY: str
     ALGORITHM: str
