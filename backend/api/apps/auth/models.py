@@ -5,9 +5,10 @@ from sqlalchemy import Column, String, Boolean, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 
 from db.base import Base
+from db.mixins import TimestampMixin
 
 
-class User(Base):
+class User(Base, TimestampMixin):
 
     __tablename__ = "users"
 
@@ -16,8 +17,6 @@ class User(Base):
     email = Column(String, nullable=False, unique=True, index=True)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email}, name={self.name})>"
