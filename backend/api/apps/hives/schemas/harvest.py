@@ -25,7 +25,7 @@ class HarvestResponse(HarvestCreate):
 
 
 class HarvestSummaryItem(BaseModel):
-    product_id: int
+    product: str
     unit: str
     total_quantity: float
 
