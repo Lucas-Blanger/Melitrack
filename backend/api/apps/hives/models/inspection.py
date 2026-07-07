@@ -14,6 +14,7 @@ from db.mixins import TimestampMixin
 if TYPE_CHECKING:
     from apps.hives.models.hive import Hive
 from apps.hives.models.enums import ColonyHealth
+from apps.hives.models.enums import AnalysisStatus
 
 
 class Inspection(Base, TimestampMixin):
@@ -35,7 +36,10 @@ class Inspection(Base, TimestampMixin):
     population_estimate: Mapped[str | None] = mapped_column(String(50), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    inspected_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    inspected_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
 
     hive: Mapped["Hive"] = relationship(back_populates="inspections")
     photos: Mapped[list["InspectionPhoto"]] = relationship(
@@ -69,19 +73,46 @@ class MLPrediction(Base, TimestampMixin):
     __tablename__ = "ml_predictions"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
     )
+
     inspection_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("inspections.id"), unique=True, nullable=False
+        ForeignKey("inspections.id"),
+        unique=True,
+        nullable=False,
     )
 
-    model_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    result: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    status: Mapped[AnalysisStatus] = mapped_column(
+        Enum(AnalysisStatus),
+        nullable=False,
+        default=AnalysisStatus.pending,
+    )
 
-    processed_at: Mapped[datetime] = mapped_column(
+    model_name: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    result: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+    )
+
+    confidence: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+
+    error_message: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    processed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        nullable=True,
     )
 
     inspection: Mapped["Inspection"] = relationship(back_populates="ml_prediction")
