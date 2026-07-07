@@ -9,6 +9,11 @@ from .harvest import (
 from .hive import HiveCreate, HiveResponse, HiveUpdate
 from .inspection import InspectionCreate, InspectionResponse
 from .photo import PhotoResponse
+from .product import (
+    ProductCreate,
+    ProductUpdate,
+    ProductResponse,
+)
 
 __all__ = [
     "HiveCreate",
@@ -23,4 +28,7 @@ __all__ = [
     "AnalysisResponse",
     "PhotoResponse",
     "DashboardOverview",
+    "ProductCreate",
+    "ProductUpdate",
+    "ProductResponse",
 ]
