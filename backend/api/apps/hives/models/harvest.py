@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Float, ForeignKey, DateTime, Text
@@ -7,13 +7,14 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base
+from db.mixins import TimestampMixin
 
 if TYPE_CHECKING:
     from apps.hives.models.product import Product
     from apps.hives.models.enums import Hive
 
 
-class Harvest(Base):
+class Harvest(Base, TimestampMixin):
     __tablename__ = "harvests"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -27,7 +28,11 @@ class Harvest(Base):
 
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
     quality_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    harvested_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    harvested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
 
     hive: Mapped["Hive"] = relationship(back_populates="harvests")
     product: Mapped["Product"] = relationship(back_populates="harvests")

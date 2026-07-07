@@ -4,12 +4,13 @@ from sqlalchemy import String, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base
+from db.mixins import TimestampMixin
 
 if TYPE_CHECKING:
     from apps.hives.models.harvest import Harvest
 
 
-class Product(Base):
+class Product(Base, TimestampMixin):
     __tablename__ = "products"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

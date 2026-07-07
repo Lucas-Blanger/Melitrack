@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 
@@ -9,13 +9,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 from db.base import Base
+from db.mixins import TimestampMixin
 
 if TYPE_CHECKING:
     from apps.hives.models.hive import Hive
 from apps.hives.models.enums import ColonyHealth
 
 
-class Inspection(Base):
+class Inspection(Base, TimestampMixin):
     __tablename__ = "inspections"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -45,7 +46,7 @@ class Inspection(Base):
     )
 
 
-class InspectionPhoto(Base):
+class InspectionPhoto(Base, TimestampMixin):
     __tablename__ = "inspection_photos"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -56,12 +57,15 @@ class InspectionPhoto(Base):
     )
 
     url: Mapped[str] = mapped_column(String, nullable=False)
-    uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    uploaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
 
     inspection: Mapped["Inspection"] = relationship(back_populates="photos")
 
 
-class MLPrediction(Base):
+class MLPrediction(Base, TimestampMixin):
     __tablename__ = "ml_predictions"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -75,6 +79,9 @@ class MLPrediction(Base):
     result: Mapped[dict] = mapped_column(JSONB, nullable=False)
     confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    processed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    processed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
 
     inspection: Mapped["Inspection"] = relationship(back_populates="ml_prediction")

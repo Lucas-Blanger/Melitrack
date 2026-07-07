@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base
+from db.mixins import TimestampMixin
 
 if TYPE_CHECKING:
     from apps.hives.models.inspection import Inspection
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 from apps.hives.models.enums import HiveType
 
 
-class Hive(Base):
+class Hive(Base, TimestampMixin):
     __tablename__ = "hives"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -35,17 +36,6 @@ class Hive(Base):
 
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-    )
-
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
-    )
-
     photos: Mapped[list["HivePhoto"]] = relationship(
         back_populates="hive", cascade="all, delete-orphan"
     )
@@ -57,7 +47,7 @@ class Hive(Base):
     )
 
 
-class HivePhoto(Base):
+class HivePhoto(Base, TimestampMixin):
     __tablename__ = "hive_photos"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -66,6 +56,5 @@ class HivePhoto(Base):
     hive_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("hives.id"), nullable=False)
 
     url: Mapped[str] = mapped_column(String, nullable=False)
-    uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     hive: Mapped["Hive"] = relationship(back_populates="photos")
