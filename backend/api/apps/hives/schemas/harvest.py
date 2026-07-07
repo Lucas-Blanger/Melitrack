@@ -8,7 +8,7 @@ from apps.hives.models import HarvestProduct
 
 class HarvestCreate(BaseModel):
     hive_id: uuid.UUID
-    product: HarvestProduct
+    product_id: int
     quantity: float = Field(..., gt=0)
     unit: str | None = Field(None, max_length=20)
     quality_notes: str | None = None
@@ -25,7 +25,7 @@ class HarvestResponse(HarvestCreate):
 
 
 class HarvestSummaryItem(BaseModel):
-    product: HarvestProduct
+    product_id: int
     unit: str
     total_quantity: float
 

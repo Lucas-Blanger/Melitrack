@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Float, ForeignKey, DateTime, Text
+from sqlalchemy import Float, ForeignKey, DateTime, Text, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -27,11 +27,13 @@ class Harvest(Base, TimestampMixin):
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
 
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    unit: Mapped[str] = mapped_column(String(20), nullable=False)
     quality_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     harvested_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
+        nullable=False,
     )
 
     hive: Mapped["Hive"] = relationship(back_populates="harvests")
