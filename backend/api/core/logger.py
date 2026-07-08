@@ -1,3 +1,4 @@
+import atexit
 import logging
 import sys
 from pathlib import Path
@@ -7,7 +8,6 @@ LOG_DIR.mkdir(exist_ok=True)
 
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-
 logging.basicConfig(
     level=logging.INFO,
     format=LOG_FORMAT,
@@ -16,6 +16,8 @@ logging.basicConfig(
         logging.FileHandler(LOG_DIR / "app.log"),
     ],
 )
+
+atexit.register(logging.shutdown)
 
 
 def get_logger(name: str) -> logging.Logger:
