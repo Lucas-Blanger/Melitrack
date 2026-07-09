@@ -1,0 +1,61 @@
+@baseUrl = http://localhost:8000
+
+@email = lucas2@email.com
+@password = 12345678
+@accessToken = {{login.response.body.access_token}}
+@product = {{createProduct.response.body.id}}
+
+###
+
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+###
+
+### Criar produto
+# @name createProduct
+POST {{baseUrl}}/products
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Mel de eucalipto",
+  "unit": "kg",
+  "description": "Mel produzido a partir de floradas de eucalipto"
+}
+
+###
+
+### Listar produtos
+GET {{baseUrl}}/products
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Buscar produto por ID
+GET {{baseUrl}}/products/{{product}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Atualizar produto
+PATCH {{baseUrl}}/products/{{product}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Mel de eucalipto premium",
+  "is_active": true
+}
+
+###
+
+### Desativar produto
+DELETE {{baseUrl}}/products/{{product}}
+Authorization: Bearer {{accessToken}}

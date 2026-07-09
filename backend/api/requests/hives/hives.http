@@ -1,0 +1,103 @@
+@baseUrl = http://localhost:8000
+
+@name = Lucas
+@email = lucas2@email.com
+@password = 12345678
+
+###
+
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+###
+
+@accessToken = {{login.response.body.access_token}}
+
+# ID de uma colmeia existente
+@hiveId = {{createHive.response.body.id}}
+
+# ID de uma foto existente
+@photoId = {{uploadPhoto.response.body.id}}
+
+###
+
+# Criar colmeia
+# @name createHive
+POST {{baseUrl}}/hives
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Colmeia 01",
+  "type": "caixa",
+  "species": "Apis mellifera",
+  "latitude": -27.634,
+  "longitude": -52.273,
+  "installation_date": "2026-07-06",
+  "is_active": true,
+  "notes": "Colmeia próxima ao pomar."
+}
+
+
+###
+
+# Listar colmeias
+GET {{baseUrl}}/hives
+Authorization: Bearer {{accessToken}}
+
+###
+
+# Buscar colmeia por ID
+GET {{baseUrl}}/hives/{{hiveId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+# Atualizar colmeia
+PUT {{baseUrl}}/hives/{{hiveId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Colmeia Atualizada",
+  "type": "caixa",
+  "species": "Apis mellifera",
+  "latitude": -27.635,
+  "longitude": -52.274,
+  "installation_date": "2026-07-06",
+  "is_active": true,
+  "notes": "Observação atualizada."
+}
+
+###
+
+# Remover colmeia
+DELETE {{baseUrl}}/hives/{{hiveId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+# Upload de foto
+# @name uploadPhoto
+POST {{baseUrl}}/hives/{{hiveId}}/photos
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="photo.jpg"
+Content-Type: image/jpeg
+
+< ./photos/photo.jpg
+--boundary--
+
+###
+
+# Excluir foto
+DELETE {{baseUrl}}/hives/{{hiveId}}/photos/{{photoId}}
+Authorization: Bearer {{accessToken}}

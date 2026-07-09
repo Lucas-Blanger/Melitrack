@@ -1,0 +1,95 @@
+@baseUrl = http://localhost:8000
+
+@email = lucas2@email.com
+@password = 12345678
+
+###
+
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+###
+
+@accessToken = {{login.response.body.access_token}}
+
+# IDs existentes
+@hiveId = {{createHive.response.body.id}}
+
+
+# Criar colmeia
+# @name createHive
+POST {{baseUrl}}/hives
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Colmeia 01",
+  "type": "caixa",
+  "species": "Apis mellifera",
+  "latitude": -27.634,
+  "longitude": -52.273,
+  "installation_date": "2026-07-06",
+  "is_active": true,
+  "notes": "Colmeia próxima ao pomar."
+}
+
+
+###
+
+# Criar inspeção
+# @name createInspection
+POST {{baseUrl}}/inspections
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "hive_id": "{{hiveId}}",
+  "health": "boa",
+  "queen_seen": true,
+  "honey_level": 8,
+  "population_estimate": "Alta",
+  "notes": "Colônia saudável.",
+  "inspected_at": "2026-07-07T15:00:00Z"
+}
+
+###
+
+@inspectionId = {{createInspection.response.body.id}}
+
+###
+
+# Listar inspeções da colmeia
+GET {{baseUrl}}/inspections/hive/{{hiveId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+# Buscar inspeção por ID
+GET {{baseUrl}}/inspections/{{inspectionId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+# Upload de foto da inspeção
+POST {{baseUrl}}/inspections/{{inspectionId}}/photos
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="photo.jpg"
+Content-Type: image/jpeg
+
+< .photos/photo.jpg
+--boundary--
+
+###
+
+# Buscar análise da inspeção
+GET {{baseUrl}}/inspections/{{inspectionId}}/analysis
+Authorization: Bearer {{accessToken}}

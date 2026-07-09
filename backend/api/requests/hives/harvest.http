@@ -1,0 +1,83 @@
+@baseUrl = http://localhost:8000
+
+@email = lucas2@email.com
+@password = 12345678
+@hiveId = {{createHive.response.body.id}}
+@accessToken = {{login.response.body.access_token}}
+
+###
+
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+###
+
+# Criar colmeia
+# @name createHive
+POST {{baseUrl}}/hives
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Colmeia 02",
+  "type": "caixa",
+  "species": "Apis mellifera",
+  "latitude": -27.634,
+  "longitude": -52.273,
+  "installation_date": "2026-07-06",
+  "is_active": true,
+  "notes": "Colmeia próxima ao pomar."
+}
+
+###
+
+### Criar colheita
+POST {{baseUrl}}/harvests
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "hive_id": "{{hiveId}}",
+  "product_id": 3,
+  "quantity": 2.5,
+  "quality_notes": "Mel de excelente qualidade.",
+  "harvested_at": "2026-07-07T14:30:00Z"
+}
+
+###
+
+### Criar colheita sem informar harvested_at
+POST {{baseUrl}}/harvests
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "hive_id": "{{hiveId}}",
+  "product_id": 3,
+  "quantity": 1.2,
+  "quality_notes": "Segunda colheita."
+}
+
+###
+
+### Listar colheitas de uma colmeia
+GET {{baseUrl}}/harvests/hive/{{hiveId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Resumo de colheitas (todas)
+GET {{baseUrl}}/harvests/summary
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Resumo por período
+GET {{baseUrl}}/harvests/summary?start_date=2026-07-01&end_date=2026-07-31
+Authorization: Bearer {{accessToken}}

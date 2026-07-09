@@ -1,0 +1,22 @@
+@baseUrl = http://localhost:8000
+
+@email = lucas2@email.com
+@password = 12345678
+@accessToken = {{login.response.body.access_token}}
+
+###
+
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+###
+
+### Dashboard overview
+GET {{baseUrl}}/dashboard/overview
+Authorization: Bearer {{accessToken}}
