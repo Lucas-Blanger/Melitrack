@@ -2,10 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import get_settings
-from db.base import Base
-from db.session import get_engine
 from apps.auth.routes import router as auth_router
 from apps.health_service.routes.health_routes import router as health_router
+from apps.hives.routes import router as hives_router
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -27,14 +26,4 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router)
 app.include_router(health_router)
-
-
-@app.on_event("startup")
-async def on_startup():
-    logger.info("Starting application")
-    # Initialize database on startup
-    engine = get_engine()
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    logger.info("Database initialized successfully")
+app.include_router(hives_router)
