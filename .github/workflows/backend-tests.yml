@@ -30,6 +30,12 @@ jobs:
       API_PORT: 8000
       DEBUG: "false"
 
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      SMTP_USERNAME: test
+      SMTP_PASSWORD: test
+      SMTP_FROM: test@example.com
+
       ALLOWED_ORIGINS: '["http://localhost:3000"]'
 
     steps:
