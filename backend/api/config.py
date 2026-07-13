@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     API_PORT: int
     DEBUG: bool
 
+    # Email config
+    SMTP_HOST: str
+    SMTP_PORT: int
+    SMTP_USERNAME: str
+    SMTP_PASSWORD: str
+    SMTP_FROM: str
+
     # CORS
     ALLOWED_ORIGINS: list[str]
 
