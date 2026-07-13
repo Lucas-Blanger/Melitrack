@@ -2,6 +2,8 @@ services:
   api:
     build: .
     container_name: melitrack-api
+    env_file:
+      - .env
     ports:
       - "${API_PORT}:8000"
     volumes:
