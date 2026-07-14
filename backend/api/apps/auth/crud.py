@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 
 from .models import User
 from .schemas import UserRegister, UserUpdate
@@ -70,3 +71,27 @@ async def delete_user(db: AsyncSession, user_id: str) -> bool:
     await db.delete(user)
     await db.commit()
     return True
+
+
+async def save_reset_code(
+    db: AsyncSession,
+    user: User,
+    code_hash: str,
+    expires: datetime,
+):
+    user.reset_code = code_hash
+    user.reset_code_expires = expires
+
+    await db.commit()
+
+
+async def update_password(
+    db: AsyncSession,
+    user: User,
+    hashed_password: str,
+):
+    user.hashed_password = hashed_password
+    user.reset_code = None
+    user.reset_code_expires = None
+
+    await db.commit()

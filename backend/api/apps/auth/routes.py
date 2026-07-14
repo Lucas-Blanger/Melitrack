@@ -4,7 +4,15 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.dependencies import get_db
-from .schemas import UserRegister, UserLogin, UserResponse, TokenResponse
+from .schemas import (
+    UserRegister,
+    UserLogin,
+    UserResponse,
+    TokenResponse,
+    ForgotPasswordRequest,
+    VerifyResetCodeRequest,
+    ResetPasswordRequest,
+)
 from .service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -51,3 +59,43 @@ async def login(
 async def logout(response: Response) -> dict:
     response.delete_cookie("session")
     return {"message": "Logged out successfully"}
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    await AuthService.forgot_password(db, request.email)
+
+    return {"message": "If the email exists, a recovery code has been sent."}
+
+
+@router.post("/verify-reset-code")
+async def verify_reset_code(
+    request: VerifyResetCodeRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    await AuthService.verify_reset_code(
+        db,
+        request.email,
+        request.code,
+    )
+
+    return {"valid": True}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    request: ResetPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    await AuthService.reset_password(
+        db,
+        request.email,
+        request.code,
+        request.new_password,
+        request.confirm_password,
+    )
+
+    return {"message": "Password updated successfully"}
