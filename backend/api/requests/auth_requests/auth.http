@@ -36,3 +36,53 @@ Content-Type: application/json
 ### Logout
 POST {{baseUrl}}/auth/logout
 Cookie: session={{accessToken}}
+
+
+###
+
+# @name forgotPassword
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+###
+
+@resetCode = 859197
+
+###
+
+# @name verifyResetCode
+POST {{baseUrl}}/auth/verify-reset-code
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "code": "{{resetCode}}"
+}
+
+###
+
+# @name resetPassword
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "code": "{{resetCode}}",
+  "new_password": "novaSenha123",
+  "confirm_password": "novaSenha123"
+}
+
+###
+
+# Login com a nova senha
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "novaSenha123"
+}
