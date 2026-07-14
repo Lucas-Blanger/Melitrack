@@ -1,10 +1,13 @@
-import pytest
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
+
+import pytest
+
 from core.exceptions import BadRequestError, UnauthorizedError
 
+from apps.auth.schemas import UserLogin, UserRegister
 from apps.auth.service import AuthService
-
-from apps.auth.schemas import UserRegister, UserLogin
 
 
 @pytest.mark.asyncio
@@ -136,3 +139,78 @@ def test_create_token():
         token = AuthService.create_token("123")
 
         assert token == "fake-token"
+
+
+@pytest.mark.asyncio
+async def test_forgot_password_sends_reset_code():
+    db = AsyncMock()
+    user = SimpleNamespace(email="lucas@email.com")
+
+    with patch(
+        "apps.auth.service.crud.get_user_by_email",
+        new=AsyncMock(return_value=user),
+    ), patch(
+        "apps.auth.service.generate_reset_code",
+        return_value="123456",
+    ), patch(
+        "apps.auth.service.hash_reset_code",
+        return_value="hashed-code",
+    ), patch(
+        "apps.auth.service.crud.save_reset_code",
+        new=AsyncMock(),
+    ) as save_reset_code, patch(
+        "apps.auth.service.EmailService.send_reset_code",
+        new=AsyncMock(),
+    ) as send_reset_code:
+        await AuthService.forgot_password(db, "lucas@email.com")
+
+    save_reset_code.assert_awaited_once()
+    send_reset_code.assert_awaited_once_with("lucas@email.com", "123456")
+
+
+@pytest.mark.asyncio
+async def test_verify_reset_code_success():
+    db = AsyncMock()
+    fake_user = SimpleNamespace(
+        reset_code="hashed-code",
+        reset_code_expires=datetime.now(timezone.utc) + timedelta(minutes=10),
+    )
+
+    with patch(
+        "apps.auth.service.crud.get_user_by_email",
+        new=AsyncMock(return_value=fake_user),
+    ), patch(
+        "apps.auth.service.hash_reset_code",
+        return_value="hashed-code",
+    ):
+        await AuthService.verify_reset_code(db, "lucas@email.com", "123456")
+
+
+@pytest.mark.asyncio
+async def test_reset_password_updates_password():
+    db = AsyncMock()
+    fake_user = SimpleNamespace(email="lucas@email.com")
+
+    with patch.object(
+        AuthService,
+        "verify_reset_code",
+        new=AsyncMock(),
+    ), patch(
+        "apps.auth.service.crud.get_user_by_email",
+        new=AsyncMock(return_value=fake_user),
+    ), patch(
+        "apps.auth.service.get_password_hash",
+        return_value="new-hash",
+    ), patch(
+        "apps.auth.service.crud.update_password",
+        new=AsyncMock(),
+    ) as update_password:
+        await AuthService.reset_password(
+            db,
+            "lucas@email.com",
+            "123456",
+            "new-password",
+            "new-password",
+        )
+
+    update_password.assert_awaited_once()

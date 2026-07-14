@@ -80,3 +80,52 @@ def test_logout():
     assert response.status_code == 200
 
     assert response.json() == {"message": "Logged out successfully"}
+
+
+def test_forgot_password_route():
+    with patch(
+        "apps.auth.routes.AuthService.forgot_password",
+        new=AsyncMock(return_value=None),
+    ):
+        response = client.post(
+            "/auth/forgot-password",
+            json={"email": "lucas@email.com"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "message": "If the email exists, a recovery code has been sent."
+    }
+
+
+def test_verify_reset_code_route():
+    with patch(
+        "apps.auth.routes.AuthService.verify_reset_code",
+        new=AsyncMock(return_value=None),
+    ):
+        response = client.post(
+            "/auth/verify-reset-code",
+            json={"email": "lucas@email.com", "code": "123456"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"valid": True}
+
+
+def test_reset_password_route():
+    with patch(
+        "apps.auth.routes.AuthService.reset_password",
+        new=AsyncMock(return_value=None),
+    ):
+        response = client.post(
+            "/auth/reset-password",
+            json={
+                "email": "lucas@email.com",
+                "code": "123456",
+                "new_password": "new-password",
+                "confirm_password": "new-password",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Password updated successfully"}
