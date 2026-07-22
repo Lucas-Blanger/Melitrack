@@ -36,7 +36,7 @@ jobs:
       SMTP_PASSWORD: test
       SMTP_FROM: test@example.com
 
-      OOGLE_CLIENT_ID: test-google-client-id
+      GOOGLE_CLIENT_ID: test-google-client-id
       GOOGLE_CLIENT_SECRET: test-google-client-secret
       GOOGLE_REDIRECT_URI: http://localhost:8000/auth/google/callback
 
