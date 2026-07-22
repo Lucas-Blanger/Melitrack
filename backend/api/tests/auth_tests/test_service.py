@@ -7,7 +7,7 @@ import pytest
 from core.exceptions import BadRequestError, UnauthorizedError
 
 from apps.auth.schemas import UserLogin, UserRegister
-from apps.auth.service import AuthService
+from apps.auth.services.service import AuthService
 
 
 @pytest.mark.asyncio
@@ -21,13 +21,13 @@ async def test_register_user_success():
     )
 
     with patch(
-        "apps.auth.service.crud.get_user_by_email",
+        "apps.auth.services.service.crud.get_user_by_email",
         new=AsyncMock(return_value=None),
     ), patch(
-        "apps.auth.service.get_password_hash",
+        "apps.auth.services.service.get_password_hash",
         return_value="hashed_password",
     ), patch(
-        "apps.auth.service.crud.create_user",
+        "apps.auth.services.service.crud.create_user",
         new=AsyncMock(),
     ) as create_user:
 
@@ -47,7 +47,7 @@ async def test_register_existing_email():
     )
 
     with patch(
-        "apps.auth.service.crud.get_user_by_email",
+        "apps.auth.services.service.crud.get_user_by_email",
         new=AsyncMock(return_value=object()),
     ):
         with pytest.raises(BadRequestError):
@@ -73,10 +73,10 @@ async def test_authenticate_success():
     )
 
     with patch(
-        "apps.auth.service.crud.get_user_by_email",
+        "apps.auth.services.service.crud.get_user_by_email",
         new=AsyncMock(return_value=fake_user),
     ), patch(
-        "apps.auth.service.verify_password",
+        "apps.auth.services.service.verify_password",
         return_value=True,
     ):
 
@@ -95,7 +95,7 @@ async def test_login_user_not_found():
     )
 
     with patch(
-        "apps.auth.service.crud.get_user_by_email",
+        "apps.auth.services.service.crud.get_user_by_email",
         new=AsyncMock(return_value=None),
     ):
         with pytest.raises(UnauthorizedError):
@@ -120,10 +120,10 @@ async def test_login_invalid_password():
     )
 
     with patch(
-        "apps.auth.service.crud.get_user_by_email",
+        "apps.auth.services.service.crud.get_user_by_email",
         new=AsyncMock(return_value=fake_user),
     ), patch(
-        "apps.auth.service.verify_password",
+        "apps.auth.services.service.verify_password",
         return_value=False,
     ):
         with pytest.raises(UnauthorizedError):
@@ -132,7 +132,7 @@ async def test_login_invalid_password():
 
 def test_create_token():
     with patch(
-        "apps.auth.service.create_access_token",
+        "apps.auth.services.service.create_access_token",
         return_value="fake-token",
     ):
 
@@ -147,19 +147,19 @@ async def test_forgot_password_sends_reset_code():
     user = SimpleNamespace(email="lucas@email.com")
 
     with patch(
-        "apps.auth.service.crud.get_user_by_email",
+        "apps.auth.services.service.crud.get_user_by_email",
         new=AsyncMock(return_value=user),
     ), patch(
-        "apps.auth.service.generate_reset_code",
+        "apps.auth.services.service.generate_reset_code",
         return_value="123456",
     ), patch(
-        "apps.auth.service.hash_reset_code",
+        "apps.auth.services.service.hash_reset_code",
         return_value="hashed-code",
     ), patch(
-        "apps.auth.service.crud.save_reset_code",
+        "apps.auth.services.service.crud.save_reset_code",
         new=AsyncMock(),
     ) as save_reset_code, patch(
-        "apps.auth.service.EmailService.send_reset_code",
+        "apps.auth.services.service.EmailService.send_reset_code",
         new=AsyncMock(),
     ) as send_reset_code:
         await AuthService.forgot_password(db, "lucas@email.com")
@@ -177,10 +177,10 @@ async def test_verify_reset_code_success():
     )
 
     with patch(
-        "apps.auth.service.crud.get_user_by_email",
+        "apps.auth.services.service.crud.get_user_by_email",
         new=AsyncMock(return_value=fake_user),
     ), patch(
-        "apps.auth.service.hash_reset_code",
+        "apps.auth.services.service.hash_reset_code",
         return_value="hashed-code",
     ):
         await AuthService.verify_reset_code(db, "lucas@email.com", "123456")
@@ -196,13 +196,13 @@ async def test_reset_password_updates_password():
         "verify_reset_code",
         new=AsyncMock(),
     ), patch(
-        "apps.auth.service.crud.get_user_by_email",
+        "apps.auth.services.service.crud.get_user_by_email",
         new=AsyncMock(return_value=fake_user),
     ), patch(
-        "apps.auth.service.get_password_hash",
+        "apps.auth.services.service.get_password_hash",
         return_value="new-hash",
     ), patch(
-        "apps.auth.service.crud.update_password",
+        "apps.auth.services.service.crud.update_password",
         new=AsyncMock(),
     ) as update_password:
         await AuthService.reset_password(
@@ -214,3 +214,65 @@ async def test_reset_password_updates_password():
         )
 
     update_password.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_google_auth_new_user():
+    db = AsyncMock()
+
+    google_user = {
+        "sub": "google-123",
+        "google_id": "google-123",
+        "email": "lucas@gmail.com",
+        "name": "Lucas",
+        "picture": "https://picture.com/avatar.png",
+    }
+
+    with patch(
+        "apps.auth.services.service.crud.get_user_by_google_id",
+        new=AsyncMock(return_value=None),
+    ), patch(
+        "apps.auth.services.service.crud.get_user_by_email",
+        new=AsyncMock(return_value=None),
+    ), patch(
+        "apps.auth.services.service.crud.create_google_user",
+        new=AsyncMock(),
+    ) as create_google_user:
+
+        await AuthService.authenticate_google(
+            db,
+            google_user,
+        )
+
+    create_google_user.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_google_auth_existing_user():
+    db = AsyncMock()
+
+    fake_user = SimpleNamespace(
+        id="123",
+        email="lucas@gmail.com",
+        google_id="google-123",
+    )
+
+    google_user = {
+        "sub": "google-123",
+        "google_id": "google-123",
+        "email": "lucas@gmail.com",
+        "name": "Lucas",
+        "picture": "avatar.png",
+    }
+
+    with patch(
+        "apps.auth.services.service.crud.get_user_by_google_id",
+        new=AsyncMock(return_value=fake_user),
+    ):
+
+        user = await AuthService.authenticate_google(
+            db,
+            google_user,
+        )
+
+    assert user.google_id == "google-123"

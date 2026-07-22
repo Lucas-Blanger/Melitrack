@@ -9,11 +9,11 @@ from core.security import (
     get_password_hash,
     verify_password,
 )
-from . import crud
+from .. import crud
 from .email_service import EmailService
-from .models import User
-from .schemas import UserLogin, UserRegister
-from .utils import generate_reset_code, hash_reset_code
+from ..models import User
+from ..schemas import UserLogin, UserRegister
+from ..utils import generate_reset_code, hash_reset_code
 
 logger = get_logger(__name__)
 
@@ -63,6 +63,49 @@ class AuthService:
         logger.info("User authenticated: %s", login_data.email)
 
         return user
+
+    @staticmethod
+    async def authenticate_google(
+        db: AsyncSession,
+        user_info: dict,
+    ) -> User:
+
+        google_id = user_info["sub"]
+
+        user = await crud.get_user_by_google_id(
+            db,
+            google_id,
+        )
+
+        if user:
+            user.picture = user_info.get("picture", getattr(user, "picture", ""))
+            user.auth_provider = "google"
+            await db.commit()
+            await db.refresh(user)
+            return user
+
+        user = await crud.get_user_by_email(
+            db,
+            user_info["email"],
+        )
+
+        if user:
+            user.google_id = google_id
+            user.picture = user_info.get("picture", user.picture)
+            user.auth_provider = "google"
+
+            await db.commit()
+            await db.refresh(user)
+
+            return user
+
+        return await crud.create_google_user(
+            db=db,
+            google_id=google_id,
+            name=user_info["name"],
+            email=user_info["email"],
+            picture=user_info.get("picture", ""),
+        )
 
     @staticmethod
     def create_token(

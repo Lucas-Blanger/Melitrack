@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from config import get_settings
 from apps.auth.routes import router as auth_router
@@ -12,6 +13,11 @@ settings = get_settings()
 
 app = FastAPI(
     title=settings.APP_NAME, version=settings.APP_VERSION, debug=settings.DEBUG
+)
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
 )
 
 # CORS Middleware

@@ -6,13 +6,12 @@ from core.logger import get_logger
 
 logger = get_logger(__name__)
 
-settings = get_settings()
-
 
 class EmailService:
 
     @staticmethod
     async def send_reset_code(email: str, code: str) -> None:
+        settings = get_settings()
         message = EmailMessage()
 
         message["Subject"] = "Password Recovery - Melitrack"

@@ -38,9 +38,13 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str
     SMTP_FROM: str
 
+    # Google OAuth2 config
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+    GOOGLE_REDIRECT_URI: str
+
     # CORS
     ALLOWED_ORIGINS: list[str]
-
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
