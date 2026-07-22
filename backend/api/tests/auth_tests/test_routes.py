@@ -129,3 +129,41 @@ def test_reset_password_route():
 
     assert response.status_code == 200
     assert response.json() == {"message": "Password updated successfully"}
+
+
+def test_google_auth_route():
+
+    fake_user = SimpleNamespace(
+        id="123",
+        email="lucas@gmail.com",
+        name="Lucas",
+        is_active=True,
+    )
+
+    with patch(
+        "apps.auth.routes.oauth.google.authorize_access_token",
+        new=AsyncMock(
+            return_value={
+                "userinfo": {
+                    "sub": "google-123",
+                    "email": "lucas@gmail.com",
+                    "name": "Lucas",
+                    "picture": "avatar.png",
+                }
+            }
+        ),
+    ), patch(
+        "apps.auth.routes.AuthService.authenticate_google",
+        new=AsyncMock(return_value=fake_user),
+    ), patch(
+        "apps.auth.routes.AuthService.create_token",
+        return_value="google-token",
+    ):
+
+        response = client.get("/auth/google/callback")
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["access_token"] == "google-token"
