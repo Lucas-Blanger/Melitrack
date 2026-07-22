@@ -1,8 +1,10 @@
+from fastapi import Request
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config import get_settings
 from core.dependencies import get_db
 from .schemas import (
     UserRegister,
@@ -13,7 +15,10 @@ from .schemas import (
     VerifyResetCodeRequest,
     ResetPasswordRequest,
 )
-from .service import AuthService
+from .services.service import AuthService
+from .services.google_service import oauth
+
+settings = get_settings()
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -53,6 +58,46 @@ async def login(
     )
 
     return TokenResponse(access_token=token)
+
+
+@router.get("/google")
+async def login_google(request: Request):
+
+    return await oauth.google.authorize_redirect(
+        request,
+        settings.GOOGLE_REDIRECT_URI,
+    )
+
+
+@router.get("/google/callback")
+async def google_callback(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+):
+
+    token = await oauth.google.authorize_access_token(request)
+
+    user_info = token["userinfo"]
+
+    user = await AuthService.authenticate_google(
+        db,
+        user_info,
+    )
+
+    jwt = AuthService.create_token(user.id)
+
+    response.set_cookie(
+        key="session",
+        value=jwt,
+        httponly=True,
+        samesite="lax",
+        max_age=24 * 60 * 60,
+    )
+
+    return {
+        "access_token": jwt,
+    }
 
 
 @router.post("/logout")
