@@ -19,6 +19,9 @@ class User(Base, TimestampMixin):
     is_active = Column(Boolean, default=True)
     reset_code = Column(String, nullable=True)
     reset_code_expires = Column(DateTime(timezone=True), nullable=True)
+    google_id = Column(String, unique=True, nullable=True)
+    picture = Column(String, nullable=True)
+    auth_provider = Column(String, nullable=False, default="local")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email}, name={self.name})>"
