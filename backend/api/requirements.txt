@@ -13,3 +13,5 @@ httpx
 motor
 python-multipart
 alembic
+authlib
+itsdangerous
