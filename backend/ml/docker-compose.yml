@@ -1,0 +1,29 @@
+services:
+  ml:
+    build: .
+    container_name: melitrack-ml
+    env_file:
+      - .env
+    ports:
+      - "${ML_PORT:-8001}:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+
+  ml-worker:
+    build: .
+    container_name: melitrack-ml-worker
+    command: celery -A app.tasks.celery_app worker --loglevel=info -Q ml
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: melitrack_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
