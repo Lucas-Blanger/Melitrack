@@ -1,0 +1,6 @@
+.env
+app/inference/weights/*.h5
+!app/inference/weights/__init__.py
+__pycache__/
+*.py[cod]
+venv-ml
