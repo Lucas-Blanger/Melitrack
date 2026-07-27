@@ -1,0 +1,4 @@
+@baseUrl = http://localhost:8003
+
+### Health check do ml-service
+GET {{baseUrl}}/health
