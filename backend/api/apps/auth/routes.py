@@ -2,6 +2,7 @@ from fastapi import Request
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Response
+from starlette.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import get_settings
@@ -61,7 +62,9 @@ async def login(
 
 
 @router.get("/google")
-async def login_google(request: Request):
+async def login_google(request: Request, redirect_to: str | None = None):
+    if redirect_to:
+        request.session["auth_redirect_to"] = redirect_to
 
     return await oauth.google.authorize_redirect(
         request,
@@ -87,13 +90,24 @@ async def google_callback(
 
     jwt = AuthService.create_token(user.id)
 
-    response.set_cookie(
+    redirect_to = request.session.pop("auth_redirect_to", None)
+    response_to_return: Response
+
+    if redirect_to:
+        response_to_return = RedirectResponse(f"{redirect_to}?auth=google")
+    else:
+        response_to_return = response
+
+    response_to_return.set_cookie(
         key="session",
         value=jwt,
         httponly=True,
         samesite="lax",
         max_age=24 * 60 * 60,
     )
+
+    if redirect_to:
+        return response_to_return
 
     return {
         "access_token": jwt,
