@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+tensorflow==2.16.1
+pillow
+numpy
+celery[redis]==5.4.0
+redis==5.0.8
+async-timeout==4.0.3
+httpx
+pydantic-settings
+python-multipart
