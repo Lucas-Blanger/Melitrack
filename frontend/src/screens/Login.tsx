@@ -1,7 +1,9 @@
 import {
   cloneElement,
+  useEffect,
   useState,
   type ReactElement,
+  type FormEvent,
   type ReactNode,
 } from "react";
 import {
@@ -15,6 +17,16 @@ import {
   User,
 } from "lucide-react";
 import { HoneycombPattern, MelitrackLogo } from "../components/shared";
+import {
+  getGoogleAuthTokenFromUrl,
+  loginUser,
+  redirectToGoogleAuth,
+  registerUser,
+  requestPasswordReset,
+  resetPassword,
+  storeAuthToken,
+  verifyResetCode,
+} from "../api/auth";
 
 type AuthMode = "login" | "register";
 type RecoveryStep = "email" | "code" | "reset";
@@ -22,12 +34,9 @@ type Notice = { type: "success" | "error"; text: string } | null;
 
 interface LoginProps {
   initialMode?: AuthMode;
-  onLogin: () => void;
+  onLogin: () => void | Promise<void>;
   onModeChange?: (mode: AuthMode) => void;
 }
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
 
 export default function Login({
   initialMode = "login",
@@ -46,6 +55,19 @@ export default function Login({
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<Notice>(() => getInitialNotice());
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hasGoogleAuthCallback = params.get("auth") === "google";
+
+    if (hasGoogleAuthCallback) {
+      const token = getGoogleAuthTokenFromUrl();
+      if (token) {
+        storeAuthToken(token);
+      }
+      void onLogin();
+    }
+  }, [onLogin]);
+
   const title = recoveryStep
     ? "Recuperar senha"
     : mode === "login"
@@ -56,7 +78,7 @@ export default function Login({
     ? "Use o código enviado por e-mail"
     : "Gerencie seu meliponário com inteligência";
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setNotice(null);
     setLoading(true);
@@ -76,22 +98,17 @@ export default function Login({
           throw new Error("Informe seu nome completo.");
         }
 
-        await apiRequest("/auth/register", {
-          method: "POST",
-          body: { name: name.trim(), email, password },
-        });
+        await registerUser({ name: name.trim(), email, password });
       }
 
-      await apiRequest("/auth/login", {
-        method: "POST",
-        body: { email, password },
-      });
+      await loginUser({ email, password });
 
       setNotice({
         type: "success",
-        text: mode === "login" ? "Login realizado." : "Conta criada com sucesso.",
+        text:
+          mode === "login" ? "Login realizado." : "Conta criada com sucesso.",
       });
-      onLogin();
+      await onLogin();
     } catch (error) {
       setNotice({ type: "error", text: getErrorMessage(error) });
     } finally {
@@ -101,10 +118,7 @@ export default function Login({
 
   const handleRecoverySubmit = async () => {
     if (recoveryStep === "email") {
-      await apiRequest("/auth/forgot-password", {
-        method: "POST",
-        body: { email },
-      });
+      await requestPasswordReset({ email });
       setRecoveryStep("code");
       setNotice({
         type: "success",
@@ -114,23 +128,17 @@ export default function Login({
     }
 
     if (recoveryStep === "code") {
-      await apiRequest("/auth/verify-reset-code", {
-        method: "POST",
-        body: { email, code },
-      });
+      await verifyResetCode({ email, code });
       setRecoveryStep("reset");
       setNotice({ type: "success", text: "Código validado." });
       return;
     }
 
-    await apiRequest("/auth/reset-password", {
-      method: "POST",
-      body: {
-        email,
-        code,
-        new_password: password,
-        confirm_password: confirmPassword,
-      },
+    await resetPassword({
+      email,
+      code,
+      new_password: password,
+      confirm_password: confirmPassword,
     });
 
     setMode("login");
@@ -172,10 +180,7 @@ export default function Login({
   };
 
   const handleGoogleAuth = () => {
-    const redirectTo = `${window.location.origin}/login`;
-    window.location.assign(
-      `${API_BASE_URL}/auth/google?redirect_to=${encodeURIComponent(redirectTo)}`,
-    );
+    redirectToGoogleAuth();
   };
 
   return (
@@ -244,7 +249,8 @@ export default function Login({
             <div
               className="mb-4 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm"
               style={{
-                backgroundColor: notice.type === "success" ? "#f0fdf4" : "#fef2f2",
+                backgroundColor:
+                  notice.type === "success" ? "#f0fdf4" : "#fef2f2",
                 borderColor: notice.type === "success" ? "#bbf7d0" : "#fecaca",
                 color: notice.type === "success" ? "#166534" : "#991b1b",
               }}
@@ -285,7 +291,10 @@ export default function Login({
             </FormField>
 
             {(recoveryStep === "code" || recoveryStep === "reset") && (
-              <FormField label="Código de recuperação" icon={<KeyRound size={14} />}>
+              <FormField
+                label="Código de recuperação"
+                icon={<KeyRound size={14} />}
+              >
                 <input
                   type="text"
                   inputMode="numeric"
@@ -318,7 +327,11 @@ export default function Login({
 
             {(mode === "register" || recoveryStep === "reset") && (
               <PasswordField
-                label={recoveryStep === "reset" ? "Confirmar nova senha" : "Confirmar senha"}
+                label={
+                  recoveryStep === "reset"
+                    ? "Confirmar nova senha"
+                    : "Confirmar senha"
+                }
                 value={confirmPassword}
                 show={showConfirmPass}
                 onToggle={() => setShowConfirmPass((current) => !current)}
@@ -359,7 +372,9 @@ export default function Login({
                   className="flex-1 h-px"
                   style={{ backgroundColor: "#e8e4dc" }}
                 />
-                <span className="text-xs text-neutral-400">ou continue com</span>
+                <span className="text-xs text-neutral-400">
+                  ou continue com
+                </span>
                 <div
                   className="flex-1 h-px"
                   style={{ backgroundColor: "#e8e4dc" }}
@@ -373,7 +388,9 @@ export default function Login({
                 style={{ borderColor: "#ddd" }}
               >
                 <GoogleIcon />
-                {mode === "login" ? "Entrar com Google" : "Cadastrar com Google"}
+                {mode === "login"
+                  ? "Entrar com Google"
+                  : "Cadastrar com Google"}
               </button>
             </>
           )}
@@ -501,24 +518,6 @@ function getSubmitLabel(mode: AuthMode, recoveryStep: RecoveryStep | null) {
   if (recoveryStep === "code") return "Validar código";
   if (recoveryStep === "reset") return "Atualizar senha";
   return mode === "login" ? "Entrar na conta" : "Criar conta gratuita";
-}
-
-async function apiRequest(
-  path: string,
-  options: { method: "POST"; body: Record<string, unknown> },
-) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: options.method,
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(options.body),
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    const detail = body?.detail;
-    throw new Error(typeof detail === "string" ? detail : "Erro ao processar solicitação.");
-  }
 }
 
 function getErrorMessage(error: unknown) {
