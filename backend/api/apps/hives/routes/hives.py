@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,11 +15,38 @@ router = APIRouter(prefix="/hives", tags=["hives"])
 
 @router.post("", response_model=HiveResponse, status_code=status.HTTP_201_CREATED)
 async def create_hive(
-    payload: HiveCreate,
+    name: str = Form(...),
+    type: str = Form(...),
+    species: str = Form(...),
+    latitude: float | None = Form(default=None),
+    longitude: float | None = Form(default=None),
+    location_description: str | None = Form(default=None),
+    notes: str | None = Form(default=None),
+    file: UploadFile | None = File(default=None),
     db: AsyncSession = Depends(get_db),
+    mongo: AsyncIOMotorDatabase = Depends(get_mongo_db),
     current_user: User = Depends(get_current_user),
 ):
-    return await hive_service.create_hive(db, current_user.id, payload)
+    payload = HiveCreate(
+        name=name,
+        type=type,
+        species=species,
+        latitude=latitude,
+        longitude=longitude,
+        location_description=location_description,
+        notes=notes,
+    )
+    hive = await hive_service.create_hive(db, current_user.id, payload)
+
+    if file is not None and file.filename:
+        await photo_service.upload_hive_photo(
+            mongo,
+            current_user.id,
+            hive.id,
+            file,
+        )
+
+    return hive
 
 
 @router.get("", response_model=list[HiveResponse])
@@ -57,6 +84,17 @@ async def delete_hive(
     current_user: User = Depends(get_current_user),
 ):
     await hive_service.delete_hive(db, mongo, hive_id, current_user.id)
+
+
+@router.get("/{hive_id}/photos", response_model=list[PhotoResponse])
+async def list_hive_photos(
+    hive_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    mongo: AsyncIOMotorDatabase = Depends(get_mongo_db),
+    current_user: User = Depends(get_current_user),
+):
+    hive = await get_owned_hive(db, hive_id, current_user.id)
+    return await photo_service.list_hive_photos(mongo, current_user.id, hive.id)
 
 
 @router.post(

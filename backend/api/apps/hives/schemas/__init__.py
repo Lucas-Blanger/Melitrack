@@ -1,4 +1,4 @@
-from .analysis import AnalysisResponse
+from .analysis import AnalysisResponse, AnalysisUpdate
 from .dashboard import DashboardOverview
 from .harvest import (
     HarvestCreate,

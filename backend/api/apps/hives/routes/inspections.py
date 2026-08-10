@@ -1,18 +1,27 @@
+import secrets
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+import httpx
+from fastapi import APIRouter, Depends, File, Header, Request, UploadFile, status
+
+from core.logger import get_logger
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.auth.models import User
 from apps.hives.schemas import (
     AnalysisResponse,
+    AnalysisUpdate,
     InspectionCreate,
     InspectionResponse,
     PhotoResponse,
 )
 from apps.hives.services import inspection_service, photo_service
+from config import get_settings
 from core.dependencies import get_current_user, get_db, get_mongo_db
+
+settings = get_settings()
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/inspections", tags=["inspections"])
 
@@ -80,6 +89,48 @@ async def upload_inspection_photo(
 
     await inspection_service.ensure_pending_analysis(db, inspection.id)
 
+    await file.seek(0)
+    image_bytes = await file.read()
+
+    if settings.ML_SERVICE_URL and settings.ML_SERVICE_TOKEN:
+        ml_service_urls = [settings.ML_SERVICE_URL]
+        if settings.ML_SERVICE_URL.endswith(":8000"):
+            ml_service_urls.append("http://host.docker.internal:8003")
+
+        last_error: Exception | None = None
+        for ml_service_url in ml_service_urls:
+            try:
+                async with httpx.AsyncClient(timeout=20.0) as client:
+                    response = await client.post(
+                        f"{ml_service_url}/analyze",
+                        data={"inspection_id": str(inspection.id)},
+                        files={
+                            "image": (
+                                file.filename or "inspection.jpg",
+                                image_bytes,
+                                file.content_type or "application/octet-stream",
+                            )
+                        },
+                        headers={"X-ML-Service-Token": settings.ML_SERVICE_TOKEN},
+                    )
+                    response.raise_for_status()
+                last_error = None
+                break
+            except httpx.HTTPError as exc:
+                last_error = exc
+                logger.warning(
+                    "ML service call failed for inspection %s at %s: %s",
+                    inspection.id,
+                    ml_service_url,
+                    exc,
+                )
+
+        if last_error is not None:
+            logger.warning(
+                "Inspection %s photo uploaded, but ML analysis could not be triggered",
+                inspection.id,
+            )
+
     return photo
 
 
@@ -93,4 +144,30 @@ async def get_inspection_analysis(
         db,
         current_user.id,
         inspection_id,
+    )
+
+
+@router.patch("/{inspection_id}/analysis", response_model=AnalysisResponse)
+async def patch_inspection_analysis(
+    inspection_id: uuid.UUID,
+    payload: AnalysisUpdate,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    ml_service_token: str | None = Header(default=None, alias="X-ML-Service-Token"),
+):
+    if ml_service_token and secrets.compare_digest(
+        ml_service_token, settings.ML_SERVICE_TOKEN
+    ):
+        return await inspection_service.update_inspection_analysis_internal(
+            db,
+            inspection_id,
+            payload,
+        )
+
+    current_user = await get_current_user(request, db)
+    return await inspection_service.update_inspection_analysis(
+        db,
+        current_user.id,
+        inspection_id,
+        payload,
     )

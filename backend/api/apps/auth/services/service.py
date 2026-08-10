@@ -53,6 +53,11 @@ class AuthService:
             logger.warning("Authentication failed: user not found")
             raise UnauthorizedError()
 
+        # User created via Google does not have a password.
+        if not user.hashed_password:
+            logger.warning("Authentication failed: user has no password configured")
+            raise UnauthorizedError(detail="This account uses Google authentication")
+
         if not verify_password(
             login_data.password,
             user.hashed_password,

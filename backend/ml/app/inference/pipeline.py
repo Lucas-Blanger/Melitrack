@@ -10,10 +10,22 @@ class HiveAnalysisPipeline:
         print("[Pipeline] models ready")
 
     def run(self, image_bytes: bytes) -> dict:
+        print("[Pipeline] Running AnomalyDetector...")
+        anomaly_res = self.anomaly.predict(image_bytes)
+        print("[Pipeline] Running PopulationEstimator...")
+        population_res = self.population.predict(image_bytes)
         return {
-            "anomaly": self.anomaly.predict(image_bytes),
-            "population": self.population.predict(image_bytes),
+            "anomaly": anomaly_res,
+            "population": population_res,
         }
 
 
-pipeline = HiveAnalysisPipeline()
+_pipeline_instance = None
+
+
+def get_pipeline() -> HiveAnalysisPipeline:
+    global _pipeline_instance
+    if _pipeline_instance is None:
+        _pipeline_instance = HiveAnalysisPipeline()
+    return _pipeline_instance
+

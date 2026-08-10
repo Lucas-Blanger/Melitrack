@@ -37,12 +37,12 @@ def test_create_hive():
         ):
             response = client.post(
                 "/hives",
-                json={
+                data={
                     "name": "Colmeia 1",
                     "type": "caixa",
                     "species": "Apis mellifera",
-                    "latitude": -27.1,
-                    "longitude": -52.1,
+                    "latitude": "-27.1",
+                    "longitude": "-52.1",
                 },
             )
     finally:
@@ -142,6 +142,37 @@ def test_update_hive():
 
     assert response.status_code == 200
     assert response.json()["name"] == "Colmeia Atualizada"
+
+
+def test_list_hive_photos():
+    hive_id = uuid4()
+    photos = [
+        SimpleNamespace(
+            id=str(uuid4()),
+            filename="cover.jpg",
+            content_type="image/jpeg",
+            size=123,
+            uploaded_at=datetime.now(timezone.utc),
+            data_url="data:image/jpeg;base64,abc",
+        )
+    ]
+
+    app.dependency_overrides[hives_routes.get_current_user] = lambda: fake_user()
+
+    try:
+        with patch(
+            "apps.hives.routes.hives.get_owned_hive",
+            new=AsyncMock(return_value=SimpleNamespace(id=hive_id)),
+        ), patch(
+            "apps.hives.routes.hives.photo_service.list_hive_photos",
+            new=AsyncMock(return_value=photos),
+        ):
+            response = client.get(f"/hives/{hive_id}/photos")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()[0]["filename"] == "cover.jpg"
 
 
 def test_delete_hive():

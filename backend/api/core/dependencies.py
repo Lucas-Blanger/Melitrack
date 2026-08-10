@@ -34,7 +34,7 @@ async def get_current_user(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    token = request.cookies.get("session")
+    token = request.cookies.get("melitrack_session") or request.cookies.get("session")
 
     authorization = request.headers.get("Authorization")
     if not token and authorization and authorization.lower().startswith("bearer "):

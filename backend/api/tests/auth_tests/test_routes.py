@@ -70,8 +70,8 @@ def test_login():
 
     assert body["access_token"] == "fake-jwt-token"
 
-    assert "session" in response.cookies
-    assert response.cookies["session"] == "fake-jwt-token"
+    assert "melitrack_session" in response.cookies
+    assert response.cookies["melitrack_session"] == "fake-jwt-token"
 
 
 def test_logout():
@@ -167,3 +167,49 @@ def test_google_auth_route():
     body = response.json()
 
     assert body["access_token"] == "google-token"
+
+
+def test_google_callback_redirect_uses_cookie_instead_of_url_token():
+    fake_user = SimpleNamespace(
+        id="123",
+        email="lucas@gmail.com",
+        name="Lucas",
+        is_active=True,
+    )
+
+    with patch(
+        "apps.auth.routes.oauth.google.authorize_redirect",
+        new=AsyncMock(return_value=SimpleNamespace(status_code=200)),
+    ), patch(
+        "apps.auth.routes.oauth.google.authorize_access_token",
+        new=AsyncMock(
+            return_value={
+                "userinfo": {
+                    "sub": "google-123",
+                    "email": "lucas@gmail.com",
+                    "name": "Lucas",
+                    "picture": "avatar.png",
+                }
+            }
+        ),
+    ), patch(
+        "apps.auth.routes.AuthService.authenticate_google",
+        new=AsyncMock(return_value=fake_user),
+    ), patch(
+        "apps.auth.routes.AuthService.create_token",
+        return_value="google-token",
+    ):
+        client.get(
+            "/auth/google?redirect_to=http://frontend.test/dashboard",
+            follow_redirects=False,
+        )
+        response = client.get(
+            "/auth/google/callback",
+            follow_redirects=False,
+        )
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "http://frontend.test/dashboard?auth=google"
+    assert "melitrack_session" in response.cookies
+    assert response.cookies["melitrack_session"] == "google-token"
+    assert "token=" not in response.headers["location"]

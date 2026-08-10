@@ -13,6 +13,8 @@ services:
       --host 0.0.0.0
       --port 8000
       --reload
+    networks:
+      - melitrack-network
 
   db:
     image: postgres:16
@@ -31,6 +33,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - melitrack-network
 
   mongo:
     image: mongo:8
@@ -44,7 +48,13 @@ services:
       MONGO_INITDB_DATABASE: ${MONGO_DB}
     volumes:
       - mongo_data:/data/db
+    networks:
+      - melitrack-network
 
 volumes:
   postgres_data:
   mongo_data:
+
+networks:
+  melitrack-network:
+    external: true

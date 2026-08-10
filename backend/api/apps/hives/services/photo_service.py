@@ -1,4 +1,5 @@
 import uuid
+from base64 import b64encode
 from datetime import datetime, timezone
 
 from bson import ObjectId
@@ -28,13 +29,37 @@ async def read_image(file: UploadFile) -> bytes:
 
 
 def serialize_photo(doc: dict) -> PhotoResponse:
+    data_url = None
+    if doc.get("data"):
+        encoded = b64encode(doc["data"]).decode("ascii")
+        data_url = f"data:{doc['content_type']};base64,{encoded}"
+
     return PhotoResponse(
         id=str(doc["_id"]),
         filename=doc["filename"],
         content_type=doc["content_type"],
         size=doc["size"],
         uploaded_at=doc["uploaded_at"],
+        data_url=data_url,
     )
+
+
+async def list_hive_photos(
+    mongo: AsyncIOMotorDatabase,
+    owner_id: uuid.UUID,
+    hive_id: uuid.UUID,
+) -> list[PhotoResponse]:
+    docs = await (
+        mongo.hive_photos.find(
+            {
+                "owner_id": str(owner_id),
+                "hive_id": str(hive_id),
+            }
+        )
+        .sort("uploaded_at", -1)
+        .to_list(length=10)
+    )
+    return [serialize_photo(doc) for doc in docs]
 
 
 async def upload_hive_photo(

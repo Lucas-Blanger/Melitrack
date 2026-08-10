@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str
     GOOGLE_REDIRECT_URI: str
 
+    # ML service config
+    ML_SERVICE_URL: str
+    ML_SERVICE_TOKEN: str
+
     # CORS
     ALLOWED_ORIGINS: list[str]
     model_config = SettingsConfigDict(

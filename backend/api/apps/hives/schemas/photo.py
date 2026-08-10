@@ -9,3 +9,4 @@ class PhotoResponse(BaseModel):
     content_type: str
     size: int
     uploaded_at: datetime
+    data_url: str | None = None

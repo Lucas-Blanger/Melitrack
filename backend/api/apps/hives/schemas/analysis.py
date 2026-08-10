@@ -12,3 +12,12 @@ class AnalysisResponse(BaseModel):
     confidence: float | None = None
     error_message: str | None = None
     processed_at: datetime | None = None
+
+
+class AnalysisUpdate(BaseModel):
+    status: AnalysisStatus
+    model_name: str | None = None
+    result: dict | None = None
+    confidence: float | None = None
+    error_message: str | None = None
+    processed_at: datetime | None = None

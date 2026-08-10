@@ -5,7 +5,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.hives.models import AnalysisStatus, Inspection, MLPrediction
-from apps.hives.schemas import AnalysisResponse, InspectionCreate
+from apps.hives.schemas import AnalysisResponse, AnalysisUpdate, InspectionCreate
 from .common import get_owned_hive, get_owned_inspection
 
 
@@ -96,3 +96,54 @@ async def get_inspection_analysis(
         error_message=prediction.error_message,
         processed_at=prediction.processed_at,
     )
+
+
+async def update_inspection_analysis_internal(
+    db: AsyncSession,
+    inspection_id: uuid.UUID,
+    payload: AnalysisUpdate,
+) -> AnalysisResponse:
+    result = await db.execute(
+        select(MLPrediction).where(MLPrediction.inspection_id == inspection_id)
+    )
+    prediction = result.scalars().first()
+
+    if not prediction:
+        prediction = MLPrediction(
+            inspection_id=inspection_id,
+            status=AnalysisStatus.pending,
+        )
+        db.add(prediction)
+
+    data = payload.model_dump(exclude_unset=True)
+    for field, value in data.items():
+        setattr(prediction, field, value)
+
+    if prediction.processed_at is None and prediction.status in {
+        AnalysisStatus.processed,
+        AnalysisStatus.failed,
+    }:
+        prediction.processed_at = datetime.now(timezone.utc)
+
+    await db.commit()
+    await db.refresh(prediction)
+
+    return AnalysisResponse(
+        status=prediction.status,
+        model_name=prediction.model_name,
+        result=prediction.result,
+        confidence=prediction.confidence,
+        error_message=prediction.error_message,
+        processed_at=prediction.processed_at,
+    )
+
+
+async def update_inspection_analysis(
+    db: AsyncSession,
+    owner_id: uuid.UUID,
+    inspection_id: uuid.UUID,
+    payload: AnalysisUpdate,
+) -> AnalysisResponse:
+    await get_owned_inspection(db, inspection_id, owner_id)
+    return await update_inspection_analysis_internal(db, inspection_id, payload)
+
