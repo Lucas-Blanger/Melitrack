@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -167,6 +167,50 @@ def test_google_auth_route():
     body = response.json()
 
     assert body["access_token"] == "google-token"
+
+
+def test_google_callback_uses_explicit_token_expiry():
+    fake_user = SimpleNamespace(
+        id="123",
+        email="lucas@gmail.com",
+        name="Lucas",
+        is_active=True,
+    )
+
+    with patch(
+        "apps.auth.routes.oauth.google.authorize_access_token",
+        new=AsyncMock(
+            return_value={
+                "userinfo": {
+                    "sub": "google-123",
+                    "email": "lucas@gmail.com",
+                    "name": "Lucas",
+                    "picture": "avatar.png",
+                }
+            }
+        ),
+    ), patch(
+        "apps.auth.routes.AuthService.authenticate_google",
+        new=AsyncMock(return_value=fake_user),
+    ), patch(
+        "apps.auth.routes.AuthService.create_token",
+        return_value="google-token",
+    ) as create_token_mock:
+        response = client.get("/auth/google/callback")
+
+    assert response.status_code == 200
+    create_token_mock.assert_called_once_with(fake_user.id, timedelta(hours=24))
+
+
+def test_google_callback_returns_bad_request_when_oauth_fails():
+    with patch(
+        "apps.auth.routes.oauth.google.authorize_access_token",
+        new=AsyncMock(side_effect=RuntimeError("oauth failed")),
+    ):
+        response = client.get("/auth/google/callback")
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Google authentication failed"
 
 
 def test_google_callback_redirect_uses_cookie_instead_of_url_token():
