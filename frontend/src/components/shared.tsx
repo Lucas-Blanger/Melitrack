@@ -2,8 +2,8 @@
 import logo from "../assets/Melitrack.png";
 
 export type HealthLevel = "excelente" | "boa" | "regular" | "ruim" | "crítica";
-export type HiveType = "Caixa" | "Isca";
-export type MLStatus = "queued" | "processing" | "done";
+export type HiveType = "caixa" | "isca";
+export type AnalysisStatus = "pending" | "processed" | "failed";
 
 export const healthConfig: Record<
   HealthLevel,
@@ -51,36 +51,37 @@ export function HealthDot({ health }: { health: HealthLevel }) {
 }
 
 export function TypeBadge({ type }: { type: HiveType }) {
+  const label = type === "caixa" ? "Caixa" : "Isca";
+
   return (
     <span
       className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
-        type === "Caixa"
+        type === "caixa"
           ? "bg-blue-100 text-blue-700"
           : "bg-purple-100 text-purple-700"
       }`}
     >
-      {type}
+      {label}
     </span>
   );
 }
 
-export function MLBadge({ status }: { status: MLStatus }) {
-  if (status === "queued")
+export function MLBadge({ status }: { status: AnalysisStatus }) {
+  if (status === "pending")
     return (
       <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-600">
         Aguardando
       </span>
     );
-  if (status === "done")
+  if (status === "processed")
     return (
       <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
         Concluído
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-      <span className="w-2.5 h-2.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-      Processando
+    <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+      Falhou
     </span>
   );
 }
