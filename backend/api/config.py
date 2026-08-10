@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     APP_VERSION: str
     API_PORT: int
     DEBUG: bool
+    COOKIE_SECURE: bool
 
     # Email config
     SMTP_HOST: str
