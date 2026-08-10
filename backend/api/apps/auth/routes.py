@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from starlette.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,6 +55,7 @@ async def login(
         value=token,
         httponly=True,
         samesite="lax",
+        secure=settings.COOKIE_SECURE,
         max_age=24 * 60 * 60,  # 24 hours
     )
 
@@ -87,49 +88,20 @@ async def login_google(request: Request):
 @router.get("/google/callback")
 async def google_callback(
     request: Request,
-    response: Response,
     db: AsyncSession = Depends(get_db),
 ):
-
-    token = await oauth.google.authorize_access_token(request)
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="Google authentication failed",
+        ) from exc
 
     user_info = token["userinfo"]
-
-    user = await AuthService.authenticate_google(
-        db,
-        user_info,
-    )
-
-    jwt = AuthService.create_token(user.id)
+    user = await AuthService.authenticate_google(db, user_info)
+    jwt = AuthService.create_token(user.id, timedelta(hours=24))
     redirect_to = request.session.pop("auth_redirect_to", None)
-
-    response.set_cookie(
-        key="melitrack_session",
-        value=jwt,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        max_age=24 * 60 * 60,
-        path="/",
-    )
-
-    if redirect_to:
-        redirect_url = redirect_to
-        if "?" in redirect_url:
-            redirect_url = f"{redirect_url}&auth=google"
-        else:
-            redirect_url = f"{redirect_url}?auth=google"
-
-        redirect_response = RedirectResponse(redirect_url)
-        response.set_cookie(
-            key="melitrack_session",
-            value=jwt,
-            httponly=True,
-            samesite="lax",
-            secure=False,
-            max_age=24 * 60 * 60,
-            path="/",
-        )
 
     if redirect_to:
         redirect_url = redirect_to
@@ -144,20 +116,22 @@ async def google_callback(
             value=jwt,
             httponly=True,
             samesite="lax",
-            secure=False,
+            secure=settings.COOKIE_SECURE,
             max_age=24 * 60 * 60,
             path="/",
         )
         return redirect_response
 
-    return {
-        "access_token": jwt,
-    }
+    return {"access_token": jwt}
 
 
 @router.post("/logout")
 async def logout(response: Response) -> dict:
-    response.delete_cookie("melitrack_session")
+    response.delete_cookie(
+        "melitrack_session",
+        path="/",
+        secure=settings.COOKIE_SECURE,
+    )
     return {"message": "Logged out successfully"}
 
 
