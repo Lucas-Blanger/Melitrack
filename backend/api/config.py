@@ -1,8 +1,18 @@
+from pathlib import Path
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BASE_DIR = Path(__file__).resolve().parent
+
 
 class Settings(BaseSettings):
+
+    model_config = SettingsConfigDict(
+        env_file=BASE_DIR / ".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+    )
+
     # Database components
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
@@ -50,11 +60,6 @@ class Settings(BaseSettings):
 
     # CORS
     ALLOWED_ORIGINS: list[str]
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-    )
 
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
