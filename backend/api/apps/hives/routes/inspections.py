@@ -18,7 +18,12 @@ from apps.hives.schemas import (
 )
 from apps.hives.services import inspection_service, photo_service
 from config import get_settings
-from core.dependencies import get_current_user, get_db, get_mongo_db
+from core.dependencies import (
+    get_current_user,
+    get_db,
+    get_mongo_db,
+    get_current_user_or_ml_service,
+)
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -151,20 +156,16 @@ async def get_inspection_analysis(
 async def patch_inspection_analysis(
     inspection_id: uuid.UUID,
     payload: AnalysisUpdate,
-    request: Request,
     db: AsyncSession = Depends(get_db),
-    ml_service_token: str | None = Header(default=None, alias="X-ML-Service-Token"),
+    current_user: User | None = Depends(get_current_user_or_ml_service),
 ):
-    if ml_service_token and secrets.compare_digest(
-        ml_service_token, settings.ML_SERVICE_TOKEN
-    ):
+    if current_user is None:
         return await inspection_service.update_inspection_analysis_internal(
             db,
             inspection_id,
             payload,
         )
 
-    current_user = await get_current_user(request, db)
     return await inspection_service.update_inspection_analysis(
         db,
         current_user.id,
