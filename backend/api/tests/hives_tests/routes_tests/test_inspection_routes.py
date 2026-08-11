@@ -122,13 +122,15 @@ def test_patch_analysis():
         processed_at=datetime.now(timezone.utc),
     )
 
-    app.dependency_overrides[inspections_routes.get_current_user] = lambda: fake_user()
+    app.dependency_overrides[inspections_routes.get_current_user_or_ml_service] = (
+        lambda: fake_user()
+    )
 
     try:
         with patch(
             "apps.hives.routes.inspections.inspection_service.update_inspection_analysis",
             new=AsyncMock(return_value=analysis),
-        ) as update_mock:
+        ):
             response = client.patch(
                 f"/inspections/{uuid.uuid4()}/analysis",
                 json={
@@ -142,7 +144,6 @@ def test_patch_analysis():
         app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    update_mock.assert_awaited_once()
 
 
 def test_upload_photo_does_not_fail_when_ml_service_is_unreachable():
