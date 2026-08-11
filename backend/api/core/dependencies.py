@@ -1,7 +1,10 @@
 from collections.abc import AsyncGenerator
+import secrets
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends, Request
+from fastapi import Depends, Request, Header
 from jose import JWTError
+from typing import Optional
+from config import get_settings
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from db.session import get_async_session_local
@@ -12,6 +15,8 @@ from core.exceptions import UnauthorizedError
 from core.security import decode_access_token
 from db.mongo import get_mongo_database
 from db.session import get_async_session_local
+
+settings = get_settings()
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -57,3 +62,15 @@ async def get_current_user(
         raise UnauthorizedError("Invalid user or inactive")
 
     return user
+
+
+async def get_current_user_or_ml_service(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    ml_service_token: str | None = Header(default=None, alias="X-ML-Service-Token"),
+) -> Optional[User]:
+    if ml_service_token and secrets.compare_digest(
+        ml_service_token, settings.ML_SERVICE_TOKEN
+    ):
+        return None
+    return await get_current_user(request, db)
