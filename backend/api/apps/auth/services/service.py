@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from core.exceptions import BadRequestError, UnauthorizedError
 from core.logger import get_logger
@@ -12,7 +13,7 @@ from core.security import (
 from .. import crud
 from .email_service import EmailService
 from ..models import User
-from ..schemas import UserLogin, UserRegister
+from ..schemas import UserLogin, UserRegister, UserUpdate
 from ..utils import generate_reset_code, hash_reset_code
 
 logger = get_logger(__name__)
@@ -189,6 +190,53 @@ class AuthService:
         )
 
         user = await crud.get_user_by_email(db, email)
+
+        await crud.update_password(
+            db=db,
+            user=user,
+            hashed_password=get_password_hash(new_password),
+        )
+
+    @staticmethod
+    async def update_user_settings(
+        db: AsyncSession,
+        user: User,
+        user_data: UserUpdate,
+    ) -> User:
+        if user_data.email and user_data.email != user.email:
+            existing_user = await crud.get_user_by_email(db, user_data.email)
+            if existing_user and existing_user.id != user.id:
+                raise BadRequestError(detail="Email already registered")
+
+        update_data = user_data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(user, field, value)
+
+        try:
+            await db.commit()
+            await db.refresh(user)
+        except IntegrityError as exc:
+            await db.rollback()
+            raise BadRequestError(detail="Email already registered") from exc
+
+        return user
+
+    @staticmethod
+    async def change_password(
+        db: AsyncSession,
+        user: User,
+        current_password: str,
+        new_password: str,
+        confirm_password: str,
+    ) -> None:
+        if user.auth_provider == "google" or not user.hashed_password:
+            raise BadRequestError("Contas autenticadas via Google não possuem senha local")
+
+        if not verify_password(current_password, user.hashed_password):
+            raise BadRequestError("Senha atual incorreta")
+
+        if new_password != confirm_password:
+            raise BadRequestError("A nova senha e a confirmação não coincidem")
 
         await crud.update_password(
             db=db,

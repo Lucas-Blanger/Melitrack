@@ -11,6 +11,8 @@ from .schemas import (
     UserRegister,
     UserLogin,
     UserResponse,
+    UserUpdate,
+    ChangePasswordRequest,
     TokenResponse,
     ForgotPasswordRequest,
     VerifyResetCodeRequest,
@@ -24,18 +26,29 @@ settings = get_settings()
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=UserResponse, status_code=201)
-async def register(
-    user_data: UserRegister, db: AsyncSession = Depends(get_db)
-) -> UserResponse:
-    user = await AuthService.register_user(db, user_data)
+def serialize_user(user: User) -> UserResponse:
     return UserResponse(
         id=str(user.id),
         name=user.name,
         email=user.email,
         is_active=user.is_active,
         created_at=user.created_at,
+        meliponary_name=getattr(user, "meliponary_name", "Meu Meliponário"),
+        meliponary_location=getattr(user, "meliponary_location", None),
+        inspection_frequency_days=getattr(user, "inspection_frequency_days", 14),
+        notify_health_alerts=getattr(user, "notify_health_alerts", True),
+        notify_email=getattr(user, "notify_email", True),
+        auth_provider=getattr(user, "auth_provider", "local"),
+        picture=getattr(user, "picture", None),
     )
+
+
+@router.post("/register", response_model=UserResponse, status_code=201)
+async def register(
+    user_data: UserRegister, db: AsyncSession = Depends(get_db)
+) -> UserResponse:
+    user = await AuthService.register_user(db, user_data)
+    return serialize_user(user)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -64,12 +77,31 @@ async def login(
 
 @router.get("/me", response_model=UserResponse)
 async def me(current_user: User = Depends(get_current_user)) -> UserResponse:
-    return UserResponse(
-        id=str(current_user.id),
-        name=current_user.name,
-        email=current_user.email,
-        is_active=current_user.is_active,
-        created_at=current_user.created_at,
+    return serialize_user(current_user)
+
+
+@router.put("/me", response_model=UserResponse)
+async def update_me(
+    user_data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    user = await AuthService.update_user_settings(db, current_user, user_data)
+    return serialize_user(user)
+
+
+@router.post("/change-password", status_code=204)
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    await AuthService.change_password(
+        db=db,
+        user=current_user,
+        current_password=request.current_password,
+        new_password=request.new_password,
+        confirm_password=request.confirm_password,
     )
 
 
