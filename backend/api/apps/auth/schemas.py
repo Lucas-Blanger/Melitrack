@@ -26,6 +26,13 @@ class UserResponse(UserBase):
     id: str
     is_active: bool
     created_at: datetime
+    meliponary_name: Optional[str] = "Meu Meliponário"
+    meliponary_location: Optional[str] = None
+    inspection_frequency_days: Optional[int] = 14
+    notify_health_alerts: Optional[bool] = True
+    notify_email: Optional[bool] = True
+    auth_provider: Optional[str] = "local"
+    picture: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -34,8 +41,19 @@ class UserUpdate(BaseModel):
 
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     email: Optional[EmailStr] = None
+    meliponary_name: Optional[str] = Field(None, max_length=255)
+    meliponary_location: Optional[str] = Field(None, max_length=255)
+    inspection_frequency_days: Optional[int] = Field(None, ge=1, le=365)
+    notify_health_alerts: Optional[bool] = None
+    notify_email: Optional[bool] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=255)
+    confirm_password: str = Field(..., min_length=8, max_length=255)
 
 
 class TokenResponse(BaseModel):
