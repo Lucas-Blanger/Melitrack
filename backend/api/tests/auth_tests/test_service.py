@@ -6,7 +6,7 @@ import pytest
 
 from core.exceptions import BadRequestError, UnauthorizedError
 
-from apps.auth.schemas import UserLogin, UserRegister
+from apps.auth.schemas import UserLogin, UserRegister, UserUpdate
 from apps.auth.services.service import AuthService
 
 
@@ -214,6 +214,58 @@ async def test_reset_password_updates_password():
         )
 
     update_password.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_user_settings_updates_profile_and_preferences():
+    db = AsyncMock()
+    user = SimpleNamespace(
+        id="123",
+        name="Lucas",
+        email="lucas@email.com",
+        meliponary_name="Antigo",
+        meliponary_location=None,
+        inspection_frequency_days=14,
+        notify_health_alerts=True,
+        notify_email=True,
+    )
+    user_data = UserUpdate(
+        name="Lucas Silva",
+        email="lucas@email.com",
+        meliponary_name="Meliponário Central",
+        meliponary_location="Curitiba",
+        inspection_frequency_days=21,
+        notify_health_alerts=False,
+        notify_email=False,
+    )
+
+    updated_user = await AuthService.update_user_settings(db, user, user_data)
+
+    assert updated_user.name == "Lucas Silva"
+    assert updated_user.meliponary_name == "Meliponário Central"
+    assert updated_user.meliponary_location == "Curitiba"
+    assert updated_user.inspection_frequency_days == 21
+    assert updated_user.notify_health_alerts is False
+    assert updated_user.notify_email is False
+    db.commit.assert_awaited_once()
+    db.refresh.assert_awaited_once_with(user)
+
+
+@pytest.mark.asyncio
+async def test_update_user_settings_rejects_duplicate_email():
+    db = AsyncMock()
+    user = SimpleNamespace(id="123", email="lucas@email.com")
+    existing_user = SimpleNamespace(id="456", email="outro@email.com")
+    user_data = UserUpdate(email="outro@email.com")
+
+    with patch(
+        "apps.auth.services.service.crud.get_user_by_email",
+        new=AsyncMock(return_value=existing_user),
+    ):
+        with pytest.raises(BadRequestError):
+            await AuthService.update_user_settings(db, user, user_data)
+
+    db.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
