@@ -36,6 +36,7 @@ export function AppShell({
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("") || "MT";
+  const meliponaryName = user?.meliponary_name?.trim() || "Meu Meliponário";
 
   const logout = async () => {
     await signOut();
@@ -118,7 +119,11 @@ export function AppShell({
 
           <div className="flex-1" />
 
-
+          <div className="min-w-0 text-right">
+            <p className="truncate text-sm font-semibold text-[#1D6A4A]">
+              {meliponaryName}
+            </p>
+          </div>
         </header>
 
         <main className="flex-1 overflow-auto">{children}</main>
