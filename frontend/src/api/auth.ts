@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "./config";
-import { getJson, postJson } from "./http";
+import { getJson, postJson, putJson } from "./http";
 import type { User } from "../types/auth";
 
 export function registerUser(body: {
@@ -16,6 +16,26 @@ export function loginUser(body: { email: string; password: string }) {
 
 export function getCurrentUser() {
   return getJson<User>("/auth/me");
+}
+
+export function updateCurrentUser(body: {
+  name?: string;
+  email?: string;
+  meliponary_name?: string | null;
+  meliponary_location?: string | null;
+  inspection_frequency_days?: number;
+  notify_health_alerts?: boolean;
+  notify_email?: boolean;
+}) {
+  return putJson<User>("/auth/me", body);
+}
+
+export function changePassword(body: {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+}) {
+  return postJson<void>("/auth/change-password", body);
 }
 
 export function logoutUser() {
