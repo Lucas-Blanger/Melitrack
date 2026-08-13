@@ -110,6 +110,21 @@ class MLPrediction(Base, TimestampMixin):
         nullable=True,
     )
 
+    corrected_result: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+    )
+
+    correction_notes: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    corrected_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     processed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
