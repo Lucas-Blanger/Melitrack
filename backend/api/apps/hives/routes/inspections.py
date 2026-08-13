@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.auth.models import User
 from apps.hives.schemas import (
+    AnalysisCorrectionUpdate,
     AnalysisResponse,
     AnalysisUpdate,
     InspectionCreate,
@@ -167,6 +168,21 @@ async def patch_inspection_analysis(
         )
 
     return await inspection_service.update_inspection_analysis(
+        db,
+        current_user.id,
+        inspection_id,
+        payload,
+    )
+
+
+@router.patch("/{inspection_id}/analysis/correction", response_model=AnalysisResponse)
+async def correct_inspection_analysis(
+    inspection_id: uuid.UUID,
+    payload: AnalysisCorrectionUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await inspection_service.correct_inspection_analysis(
         db,
         current_user.id,
         inspection_id,
