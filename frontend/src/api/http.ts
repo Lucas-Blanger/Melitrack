@@ -63,6 +63,10 @@ export function putJson<T>(path: string, body: JsonBody) {
   return requestJson<T>(path, { method: "PUT", body });
 }
 
+export function patchJson<T>(path: string, body: JsonBody) {
+  return requestJson<T>(path, { method: "PATCH", body });
+}
+
 export function deleteJson(path: string) {
   return requestJson<void>(path, { method: "DELETE" });
 }

@@ -40,6 +40,8 @@ export default function SettingsScreen() {
   useEffect(() => {
     if (!user) return;
 
+    // Keep the editable form in sync when the authenticated user changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm({
       name: user.name,
       email: user.email,

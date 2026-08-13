@@ -12,6 +12,7 @@ import {
   Droplets,
   FileText,
   MapPin,
+  Pencil,
   Plus,
   ShieldAlert,
   ShieldCheck,
@@ -26,6 +27,7 @@ import {
 } from "react";
 import { useParams } from "react-router-dom";
 import {
+  correctInspectionAnalysis,
   createHarvest,
   createInspection,
   getHive,
@@ -53,6 +55,7 @@ import { useAsync } from "../hooks/useAsync";
 import { formatDate, formatDateTime } from "../lib/format";
 import type {
   Analysis,
+  MLAnalysisResult,
   Harvest,
   HealthLevel,
   Hive,
@@ -82,14 +85,9 @@ export default function HiveDetail() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!hiveId) {
-      setPhotoUrl(null);
-      return;
-    }
-
     let active = true;
 
-    void listHivePhotos(hiveId)
+    void (hiveId ? listHivePhotos(hiveId) : Promise.resolve([]))
       .then((photos) => {
         if (active) {
           setPhotoUrl(photos[0]?.data_url ?? null);
@@ -232,6 +230,7 @@ export default function HiveDetail() {
         <AnalysisTab
           analysis={data.analysis}
           latestInspection={latestInspection}
+          onCorrected={() => void reload()}
         />
       )}
 
@@ -363,11 +362,14 @@ function HarvestTab({
 function AnalysisTab({
   analysis,
   latestInspection,
+  onCorrected,
 }: {
   analysis: Analysis | null;
   latestInspection?: Inspection;
+  onCorrected: () => void;
 }) {
   const [showRawJson, setShowRawJson] = useState(false);
+  const [showCorrectionModal, setShowCorrectionModal] = useState(false);
 
   if (!latestInspection) {
     return (
@@ -502,6 +504,64 @@ function AnalysisTab({
           </div>
         </Card>
       </div>
+
+      <Card className="p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <Pencil size={16} className="text-[#1D6A4A]" />
+              <h2 className="text-sm font-semibold text-neutral-800">
+                Correção humana
+              </h2>
+            </div>
+            <p className="mt-1 text-sm text-neutral-500">
+              Ajuste o diagnóstico da IA quando a inspeção em campo indicar outro resultado.
+            </p>
+            {analysis.corrected_at && (
+              <p className="mt-2 text-xs font-medium text-[#1D6A4A]">
+                Última correção: {formatDateTime(analysis.corrected_at)}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowCorrectionModal(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#1D6A4A] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#155438]"
+          >
+            <Pencil size={15} />
+            {analysis.corrected_result ? "Editar Correção" : "Corrigir Resultado"}
+          </button>
+        </div>
+
+        {analysis.corrected_result && (
+          <div className="mt-5 grid gap-4 border-t border-neutral-100 pt-5 sm:grid-cols-2 xl:grid-cols-4">
+            <CorrectionSummary
+              label="Diagnóstico corrigido"
+              value={
+                analysis.corrected_result.anomaly?.has_anomaly
+                  ? "Anomalia detectada"
+                  : "Sem anomalia"
+              }
+            />
+            <CorrectionSummary
+              label="População corrigida"
+              value={
+                analysis.corrected_result.population?.level
+                  ? `Nível ${analysis.corrected_result.population.level}`
+                  : "Não informada"
+              }
+            />
+            <CorrectionSummary
+              label="Estimativa corrigida"
+              value={analysis.corrected_result.population?.estimated_count || "Não informada"}
+            />
+            <CorrectionSummary
+              label="Notas"
+              value={analysis.correction_notes || "Sem notas"}
+            />
+          </div>
+        )}
+      </Card>
 
       {/* Caso haja mensagem de erro */}
       {analysis.error_message && (
@@ -664,8 +724,204 @@ function AnalysisTab({
           </div>
         )}
       </Card>
+
+      {showCorrectionModal && (
+        <AnalysisCorrectionModal
+          inspectionId={latestInspection.id}
+          analysis={analysis}
+          onClose={() => setShowCorrectionModal(false)}
+          onSaved={() => {
+            setShowCorrectionModal(false);
+            onCorrected();
+          }}
+        />
+      )}
     </div>
   );
+}
+
+function CorrectionSummary({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-[#fafaf8] p-3">
+      <p className="text-xs font-medium text-neutral-400">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-neutral-800">{value}</p>
+    </div>
+  );
+}
+
+function AnalysisCorrectionModal({
+  inspectionId,
+  analysis,
+  onClose,
+  onSaved,
+}: {
+  inspectionId: string;
+  analysis: Analysis;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const source = analysis.corrected_result ?? analysis.result ?? {};
+  const sourceAnomaly = source.anomaly;
+  const sourcePopulation = source.population;
+  const sourceScores = sourceAnomaly?.scores ?? {};
+  const [hasAnomaly, setHasAnomaly] = useState(
+    sourceAnomaly?.has_anomaly ? "true" : "false",
+  );
+  const [populationLevel, setPopulationLevel] = useState(
+    sourcePopulation?.level ?? "",
+  );
+  const [estimatedCount, setEstimatedCount] = useState(
+    sourcePopulation?.estimated_count ?? "",
+  );
+  const [densityScore, setDensityScore] = useState(
+    String(toPercent(sourcePopulation?.density_score)),
+  );
+  const [fungiScore, setFungiScore] = useState(String(toPercent(sourceScores.fungi)));
+  const [emptyCellsScore, setEmptyCellsScore] = useState(
+    String(toPercent(sourceScores.empty_cells)),
+  );
+  const [diseaseScore, setDiseaseScore] = useState(
+    String(toPercent(sourceScores.disease_signs)),
+  );
+  const [notes, setNotes] = useState(analysis.correction_notes ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    const correctedResult: MLAnalysisResult = {
+      ...analysis.result,
+      anomaly: {
+        ...analysis.result?.anomaly,
+        has_anomaly: hasAnomaly === "true",
+        alerts: hasAnomaly === "true" ? analysis.result?.anomaly?.alerts ?? [] : [],
+        scores: {
+          ...analysis.result?.anomaly?.scores,
+          fungi: fromPercent(fungiScore),
+          empty_cells: fromPercent(emptyCellsScore),
+          disease_signs: fromPercent(diseaseScore),
+        },
+      },
+      population: {
+        ...analysis.result?.population,
+        level: populationLevel || undefined,
+        density_score: fromPercent(densityScore),
+        estimated_count: estimatedCount || undefined,
+      },
+      population_percent: Number(densityScore || 0),
+    };
+
+    try {
+      await correctInspectionAnalysis(inspectionId, {
+        corrected_result: correctedResult,
+        correction_notes: notes || null,
+      });
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível salvar.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal title="Corrigir Resultado da IA" onClose={onClose}>
+      <form onSubmit={submit} className="space-y-4">
+        <Field label="Diagnóstico real">
+          <Select value={hasAnomaly} onChange={setHasAnomaly} className="w-full">
+            <option value="false">Sem anomalia</option>
+            <option value="true">Anomalia detectada</option>
+          </Select>
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Nível populacional">
+            <Select
+              value={populationLevel}
+              onChange={setPopulationLevel}
+              className="w-full"
+            >
+              <option value="">Não informar</option>
+              <option value="baixo">Baixo</option>
+              <option value="médio">Médio</option>
+              <option value="alto">Alto</option>
+            </Select>
+          </Field>
+          <Field label="Estimativa de indivíduos">
+            <TextInput
+              value={estimatedCount}
+              onChange={(event) => setEstimatedCount(event.target.value)}
+              placeholder="Ex.: 3.000"
+            />
+          </Field>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Densidade (%)">
+            <TextInput
+              type="number"
+              min={0}
+              max={100}
+              value={densityScore}
+              onChange={(event) => setDensityScore(event.target.value)}
+            />
+          </Field>
+          <Field label="Fungos / Mofo (%)">
+            <TextInput
+              type="number"
+              min={0}
+              max={100}
+              value={fungiScore}
+              onChange={(event) => setFungiScore(event.target.value)}
+            />
+          </Field>
+          <Field label="Células vazias (%)">
+            <TextInput
+              type="number"
+              min={0}
+              max={100}
+              value={emptyCellsScore}
+              onChange={(event) => setEmptyCellsScore(event.target.value)}
+            />
+          </Field>
+          <Field label="Sinais de doenças (%)">
+            <TextInput
+              type="number"
+              min={0}
+              max={100}
+              value={diseaseScore}
+              onChange={(event) => setDiseaseScore(event.target.value)}
+            />
+          </Field>
+        </div>
+
+        <Field label="Notas da correção">
+          <TextArea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            placeholder="Explique o que foi observado na revisão em campo."
+          />
+        </Field>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <ModalActions onClose={onClose} submitting={submitting} />
+      </form>
+    </Modal>
+  );
+}
+
+function toPercent(value: number | undefined) {
+  if (typeof value !== "number") return 0;
+  return Math.round(value * 100);
+}
+
+function fromPercent(value: string) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.max(0, Math.min(100, numeric)) / 100;
 }
 
 function NewInspectionModal({

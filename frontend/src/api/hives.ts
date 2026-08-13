@@ -1,6 +1,7 @@
-import { getJson, postFormData, postJson } from "./http";
+import { getJson, patchJson, postFormData, postJson } from "./http";
 import type {
   Analysis,
+  AnalysisCorrectionUpdate,
   DashboardOverview,
   Harvest,
   HarvestCreate,
@@ -66,6 +67,13 @@ export function uploadInspectionPhoto(inspectionId: string, file: File) {
 
 export function getInspectionAnalysis(inspectionId: string) {
   return getJson<Analysis>(`/inspections/${inspectionId}/analysis`);
+}
+
+export function correctInspectionAnalysis(
+  inspectionId: string,
+  body: AnalysisCorrectionUpdate,
+) {
+  return patchJson<Analysis>(`/inspections/${inspectionId}/analysis/correction`, body);
 }
 
 export function listHarvestsByHive(hiveId: string) {

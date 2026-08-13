@@ -137,5 +137,13 @@ export interface Analysis {
   result: MLAnalysisResult | null;
   confidence: number | null;
   error_message: string | null;
+  corrected_result: MLAnalysisResult | null;
+  correction_notes: string | null;
+  corrected_at: string | null;
   processed_at: string | null;
+}
+
+export interface AnalysisCorrectionUpdate {
+  corrected_result: MLAnalysisResult;
+  correction_notes?: string | null;
 }
