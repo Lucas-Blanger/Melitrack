@@ -5,8 +5,27 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.hives.models import AnalysisStatus, Inspection, MLPrediction
-from apps.hives.schemas import AnalysisResponse, AnalysisUpdate, InspectionCreate
+from apps.hives.schemas import (
+    AnalysisCorrectionUpdate,
+    AnalysisResponse,
+    AnalysisUpdate,
+    InspectionCreate,
+)
 from .common import get_owned_hive, get_owned_inspection
+
+
+def _analysis_response(prediction: MLPrediction) -> AnalysisResponse:
+    return AnalysisResponse(
+        status=prediction.status,
+        model_name=prediction.model_name,
+        result=prediction.result,
+        confidence=prediction.confidence,
+        error_message=prediction.error_message,
+        corrected_result=prediction.corrected_result,
+        correction_notes=prediction.correction_notes,
+        corrected_at=prediction.corrected_at,
+        processed_at=prediction.processed_at,
+    )
 
 
 async def create_inspection(
@@ -88,14 +107,7 @@ async def get_inspection_analysis(
     if not prediction:
         return AnalysisResponse(status=AnalysisStatus.pending)
 
-    return AnalysisResponse(
-        status=prediction.status,
-        model_name=prediction.model_name,
-        result=prediction.result,
-        confidence=prediction.confidence,
-        error_message=prediction.error_message,
-        processed_at=prediction.processed_at,
-    )
+    return _analysis_response(prediction)
 
 
 async def update_inspection_analysis_internal(
@@ -128,14 +140,7 @@ async def update_inspection_analysis_internal(
     await db.commit()
     await db.refresh(prediction)
 
-    return AnalysisResponse(
-        status=prediction.status,
-        model_name=prediction.model_name,
-        result=prediction.result,
-        confidence=prediction.confidence,
-        error_message=prediction.error_message,
-        processed_at=prediction.processed_at,
-    )
+    return _analysis_response(prediction)
 
 
 async def update_inspection_analysis(
@@ -147,3 +152,32 @@ async def update_inspection_analysis(
     await get_owned_inspection(db, inspection_id, owner_id)
     return await update_inspection_analysis_internal(db, inspection_id, payload)
 
+
+async def correct_inspection_analysis(
+    db: AsyncSession,
+    owner_id: uuid.UUID,
+    inspection_id: uuid.UUID,
+    payload: AnalysisCorrectionUpdate,
+) -> AnalysisResponse:
+    inspection = await get_owned_inspection(db, inspection_id, owner_id)
+
+    result = await db.execute(
+        select(MLPrediction).where(MLPrediction.inspection_id == inspection.id)
+    )
+    prediction = result.scalars().first()
+
+    if not prediction:
+        prediction = MLPrediction(
+            inspection_id=inspection.id,
+            status=AnalysisStatus.pending,
+        )
+        db.add(prediction)
+
+    prediction.corrected_result = payload.corrected_result
+    prediction.correction_notes = payload.correction_notes
+    prediction.corrected_at = datetime.now(timezone.utc)
+
+    await db.commit()
+    await db.refresh(prediction)
+
+    return _analysis_response(prediction)
