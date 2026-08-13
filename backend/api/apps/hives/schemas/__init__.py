@@ -1,4 +1,4 @@
-from .analysis import AnalysisResponse, AnalysisUpdate
+from .analysis import AnalysisCorrectionUpdate, AnalysisResponse, AnalysisUpdate
 from .dashboard import DashboardOverview
 from .harvest import (
     HarvestCreate,
@@ -26,6 +26,8 @@ __all__ = [
     "HarvestSummaryItem",
     "HarvestSummaryResponse",
     "AnalysisResponse",
+    "AnalysisUpdate",
+    "AnalysisCorrectionUpdate",
     "PhotoResponse",
     "DashboardOverview",
     "ProductCreate",
