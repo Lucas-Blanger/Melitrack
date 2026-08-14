@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import get_settings
 from core.dependencies import get_current_user, get_db
+from core.rate_limiter import rate_limit
 from .models import User
 from .schemas import (
     UserRegister,
@@ -43,7 +44,21 @@ def serialize_user(user: User) -> UserResponse:
     )
 
 
-@router.post("/register", response_model=UserResponse, status_code=201)
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=201,
+    dependencies=[
+        Depends(
+            rate_limit(
+                name="auth-register",
+                limit=settings.RATE_LIMIT_AUTH_REGISTER_REQUESTS,
+                window_seconds=settings.RATE_LIMIT_AUTH_REGISTER_WINDOW_SECONDS,
+                enabled=settings.RATE_LIMIT_ENABLED,
+            )
+        )
+    ],
+)
 async def register(
     user_data: UserRegister, db: AsyncSession = Depends(get_db)
 ) -> UserResponse:
@@ -51,7 +66,20 @@ async def register(
     return serialize_user(user)
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    dependencies=[
+        Depends(
+            rate_limit(
+                name="auth-login",
+                limit=settings.RATE_LIMIT_AUTH_LOGIN_REQUESTS,
+                window_seconds=settings.RATE_LIMIT_AUTH_LOGIN_WINDOW_SECONDS,
+                enabled=settings.RATE_LIMIT_ENABLED,
+            )
+        )
+    ],
+)
 async def login(
     credentials: UserLogin, response: Response, db: AsyncSession = Depends(get_db)
 ) -> TokenResponse:
@@ -90,7 +118,20 @@ async def update_me(
     return serialize_user(user)
 
 
-@router.post("/change-password", status_code=204)
+@router.post(
+    "/change-password",
+    status_code=204,
+    dependencies=[
+        Depends(
+            rate_limit(
+                name="auth-change-password",
+                limit=settings.RATE_LIMIT_AUTH_PASSWORD_RESET_REQUESTS,
+                window_seconds=settings.RATE_LIMIT_AUTH_PASSWORD_RESET_WINDOW_SECONDS,
+                enabled=settings.RATE_LIMIT_ENABLED,
+            )
+        )
+    ],
+)
 async def change_password(
     request: ChangePasswordRequest,
     current_user: User = Depends(get_current_user),
@@ -105,7 +146,19 @@ async def change_password(
     )
 
 
-@router.get("/google")
+@router.get(
+    "/google",
+    dependencies=[
+        Depends(
+            rate_limit(
+                name="auth-google",
+                limit=settings.RATE_LIMIT_AUTH_GOOGLE_REQUESTS,
+                window_seconds=settings.RATE_LIMIT_AUTH_GOOGLE_WINDOW_SECONDS,
+                enabled=settings.RATE_LIMIT_ENABLED,
+            )
+        )
+    ],
+)
 async def login_google(request: Request):
     redirect_to = request.query_params.get("redirect_to")
     if redirect_to:
@@ -167,7 +220,19 @@ async def logout(response: Response) -> dict:
     return {"message": "Logged out successfully"}
 
 
-@router.post("/forgot-password")
+@router.post(
+    "/forgot-password",
+    dependencies=[
+        Depends(
+            rate_limit(
+                name="auth-forgot-password",
+                limit=settings.RATE_LIMIT_AUTH_PASSWORD_RESET_REQUESTS,
+                window_seconds=settings.RATE_LIMIT_AUTH_PASSWORD_RESET_WINDOW_SECONDS,
+                enabled=settings.RATE_LIMIT_ENABLED,
+            )
+        )
+    ],
+)
 async def forgot_password(
     request: ForgotPasswordRequest,
     db: AsyncSession = Depends(get_db),
@@ -177,7 +242,19 @@ async def forgot_password(
     return {"message": "If the email exists, a recovery code has been sent."}
 
 
-@router.post("/verify-reset-code")
+@router.post(
+    "/verify-reset-code",
+    dependencies=[
+        Depends(
+            rate_limit(
+                name="auth-verify-reset-code",
+                limit=settings.RATE_LIMIT_AUTH_PASSWORD_RESET_REQUESTS,
+                window_seconds=settings.RATE_LIMIT_AUTH_PASSWORD_RESET_WINDOW_SECONDS,
+                enabled=settings.RATE_LIMIT_ENABLED,
+            )
+        )
+    ],
+)
 async def verify_reset_code(
     request: VerifyResetCodeRequest,
     db: AsyncSession = Depends(get_db),
@@ -191,7 +268,19 @@ async def verify_reset_code(
     return {"valid": True}
 
 
-@router.post("/reset-password")
+@router.post(
+    "/reset-password",
+    dependencies=[
+        Depends(
+            rate_limit(
+                name="auth-reset-password",
+                limit=settings.RATE_LIMIT_AUTH_PASSWORD_RESET_REQUESTS,
+                window_seconds=settings.RATE_LIMIT_AUTH_PASSWORD_RESET_WINDOW_SECONDS,
+                enabled=settings.RATE_LIMIT_ENABLED,
+            )
+        )
+    ],
+)
 async def reset_password(
     request: ResetPasswordRequest,
     db: AsyncSession = Depends(get_db),
