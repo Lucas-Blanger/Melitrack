@@ -7,6 +7,7 @@ from apps.auth.routes import router as auth_router
 from apps.health_service.routes.health_routes import router as health_router
 from apps.hives.routes import router as hives_router
 from core.logger import get_logger
+from core.rate_limiter import RateLimitMiddleware, rate_limiter
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -18,6 +19,14 @@ app = FastAPI(
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SECRET_KEY,
+)
+
+app.add_middleware(
+    RateLimitMiddleware,
+    limiter=rate_limiter,
+    limit=settings.RATE_LIMIT_DEFAULT_REQUESTS,
+    window_seconds=settings.RATE_LIMIT_DEFAULT_WINDOW_SECONDS,
+    enabled=settings.RATE_LIMIT_ENABLED,
 )
 
 # CORS Middleware
