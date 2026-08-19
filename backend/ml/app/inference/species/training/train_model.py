@@ -53,7 +53,6 @@ def build_datasets(data_dir: Path):
             shuffle=False,
         )
 
-    # Cache/prefetch para performance de treino em GPU
     autotune = tf.data.AUTOTUNE
     train_ds = train_ds.prefetch(autotune)
     val_ds = val_ds.prefetch(autotune)
@@ -64,7 +63,7 @@ def build_datasets(data_dir: Path):
 
 
 def compute_class_weights(data_dir: Path, class_names: list[str]) -> dict[int, float]:
-    """Compensa classes com menos imagens, comum quando o dataset é coletado do zero."""
+    # It compensates for classes with fewer images, which is common when the dataset is collected from scratch.
     counts = []
     for name in class_names:
         n = len(list((data_dir / "train" / name).glob("*")))
@@ -93,7 +92,7 @@ def build_model(num_classes: int) -> keras.Model:
         input_shape=IMG_SIZE + (3,),
         pooling="avg",
     )
-    base_model.trainable = False  # fase 1: congelado
+    base_model.trainable = False
 
     inputs = keras.Input(shape=IMG_SIZE + (3,))
     x = data_augmentation(inputs)
@@ -111,19 +110,19 @@ def main() -> None:
     parser.add_argument("--data-dir", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument(
-        "--epochs", type=int, default=30, help="Épocas da fase 1 (backbone congelado)"
+        "--epochs", type=int, default=30, help="Epochs of phase 1 (frozen backbone)"
     )
     parser.add_argument(
         "--fine-tune-epochs",
         type=int,
         default=15,
-        help="Épocas da fase 2 (fine-tuning)",
+        help="Epochs of phase 2 (fine-tuning)",
     )
     parser.add_argument(
         "--fine-tune-layers",
         type=int,
         default=30,
-        help="Nº de camadas finais do backbone a descongelar",
+        help="Number of final backbone layers to unfreeze",
     )
     args = parser.parse_args()
 
@@ -131,7 +130,7 @@ def main() -> None:
 
     train_ds, val_ds, test_ds, class_names = build_datasets(args.data_dir)
     class_weights = compute_class_weights(args.data_dir, class_names)
-    print("Pesos de classe (compensando desbalanceamento):", class_weights)
+    print("Class weights (compensating for imbalance):", class_weights)
 
     model, base_model = build_model(num_classes=len(class_names))
 
@@ -148,7 +147,7 @@ def main() -> None:
         keras.callbacks.ReduceLROnPlateau(patience=3, factor=0.5, monitor="val_loss"),
     ]
 
-    print("\n=== Fase 1: treinando cabeça de classificação (backbone congelado) ===")
+    print("\nPhase 1: training classification head (frozen backbone)")
     history_1 = model.fit(
         train_ds,
         validation_data=val_ds,
@@ -157,15 +156,13 @@ def main() -> None:
         callbacks=callbacks,
     )
 
-    print("\n=== Fase 2: fine-tuning das últimas camadas do backbone ===")
+    print("\nPhase 2: fine-tuning the final layers of the backbone")
     base_model.trainable = True
     for layer in base_model.layers[: -args.fine_tune_layers]:
         layer.trainable = False
 
     model.compile(
-        optimizer=keras.optimizers.Adam(
-            learning_rate=1e-5
-        ),  # LR baixo para não destruir pesos pré-treinados
+        optimizer=keras.optimizers.Adam(learning_rate=1e-5),
         loss="categorical_crossentropy",
         metrics=["accuracy"],
     )
@@ -178,7 +175,6 @@ def main() -> None:
         callbacks=callbacks,
     )
 
-    # Avaliação final
     report = {
         "class_names": class_names,
         "phase1_history": {
@@ -193,9 +189,8 @@ def main() -> None:
         test_loss, test_acc = model.evaluate(test_ds)
         report["test_loss"] = float(test_loss)
         report["test_accuracy"] = float(test_acc)
-        print(f"\nAcurácia no conjunto de teste: {test_acc:.4f}")
+        print(f"\nAccuracy on test set: {test_acc:.4f}")
 
-    # Salvar modelo e metadados
     model_path = args.output_dir / "species_model.keras"
     model.save(model_path)
 
@@ -206,10 +201,6 @@ def main() -> None:
     report_path = args.output_dir / "training_report.json"
     with open(report_path, "w") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
-
-    print(f"\nModelo salvo em: {model_path}")
-    print(f"Labels salvos em: {labels_path}")
-    print(f"Relatório salvo em: {report_path}")
 
 
 if __name__ == "__main__":
