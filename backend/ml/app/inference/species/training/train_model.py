@@ -17,8 +17,8 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
+from tensorflow import keras  # type: ignore
+from tensorflow.keras import layers  # type: ignore
 
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
