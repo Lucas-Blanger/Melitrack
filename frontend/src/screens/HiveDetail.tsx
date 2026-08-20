@@ -65,6 +65,16 @@ import type {
 
 type Tab = "inspections" | "harvests" | "ml";
 
+const anomalyCategoryLabels: Record<string, string> = {
+  fungi: "Fungos",
+  empty_cells: "Células vazias",
+  disease_signs: "Sinais de doenças",
+};
+
+function formatAnomalyCategory(category: string) {
+  return anomalyCategoryLabels[category] || category;
+}
+
 interface DetailData {
   hive: Hive;
   inspections: Inspection[];
@@ -395,12 +405,6 @@ function AnalysisTab({
   const anomaly = result?.anomaly;
   const population = result?.population;
 
-  const scoreLabels: Record<string, string> = {
-    fungi: "Fungos / Mofo",
-    empty_cells: "Células Vazias",
-    disease_signs: "Sinais de Doenças",
-  };
-
   const confidencePct =
     analysis.confidence !== null ? Math.round(analysis.confidence * 100) : null;
 
@@ -608,7 +612,9 @@ function AnalysisTab({
                     <AlertTriangle size={16} className="mt-0.5 shrink-0 text-rose-500" />
                     <div>
                       <p className="font-semibold text-rose-900">{alert.description}</p>
-                      <p className="mt-0.5 text-rose-600">Categoria: {alert.label}</p>
+                      <p className="mt-0.5 text-rose-600">
+                        Categoria: {formatAnomalyCategory(alert.label)}
+                      </p>
                     </div>
                   </div>
                   <span className="rounded-md bg-rose-200/60 px-2 py-0.5 font-bold text-rose-800">
@@ -628,7 +634,7 @@ function AnalysisTab({
               Object.entries(anomaly.scores).map(([key, rawScore]) => {
                 const score = typeof rawScore === "number" ? rawScore : 0;
                 const percent = Math.round(score * 100);
-                const label = scoreLabels[key] || key;
+                const label = formatAnomalyCategory(key);
                 const isHigh = percent >= 50;
 
                 return (
