@@ -14,6 +14,7 @@ from .product import (
     ProductUpdate,
     ProductResponse,
 )
+from .species import SpeciesIdentificationResponse, SpeciesPrediction
 
 __all__ = [
     "HiveCreate",
@@ -33,4 +34,6 @@ __all__ = [
     "ProductCreate",
     "ProductUpdate",
     "ProductResponse",
+    "SpeciesIdentificationResponse",
+    "SpeciesPrediction",
 ]

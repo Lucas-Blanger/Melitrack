@@ -4,3 +4,10 @@ app/inference/weights/*.h5
 __pycache__/
 *.py[cod]
 venv-ml
+
+app/inference/species/training/dataset/
+app/inference/species/training/raw_dataset/jatai
+app/inference/species/training/raw_dataset/mandacaia
+app/inference/species/training/raw_dataset/manduri
+app/inference/species/training/raw_dataset/mirim
+app/inference/species/training/raw_dataset/urucu
