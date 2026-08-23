@@ -1,5 +1,9 @@
 from celery import Celery
+
+from app.core.logger import get_logger
 from app.config import settings
+
+logger = get_logger(__name__)
 
 celery = Celery(
     "ml-service",
@@ -14,4 +18,5 @@ celery.conf.update(
     result_serializer="json",
     accept_content=["json"],
     timezone="America/Sao_Paulo",
+    worker_hijack_root_logger=False,
 )

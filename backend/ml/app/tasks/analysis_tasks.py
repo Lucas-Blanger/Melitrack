@@ -1,12 +1,12 @@
 import base64
-import logging
 
 import httpx
-from app.tasks.celery_app import celery
-from app.inference.pipeline import get_pipeline
 from app.config import settings
+from app.core.logger import get_logger
+from app.inference.pipeline import get_pipeline
+from app.tasks.celery_app import celery
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 MODEL_NAME = "EfficientNetB0-v1"
 
 

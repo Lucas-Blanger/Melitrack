@@ -4,10 +4,13 @@ services:
     container_name: melitrack-ml
     env_file:
       - .env
+    environment:
+      LOG_FILE: /var/log/melitrack/ml.log
     ports:
       - "${ML_PORT:-8001}:8000"
     volumes:
       - .:/app
+      - ../logs:/var/log/melitrack
     depends_on:
       - redis
     networks:
@@ -19,8 +22,11 @@ services:
     command: celery -A app.tasks.celery_app worker --loglevel=info -Q ml --pool=threads --concurrency=4
     env_file:
       - .env
+    environment:
+      LOG_FILE: /var/log/melitrack/ml-worker.log
     volumes:
       - .:/app
+      - ../logs:/var/log/melitrack
     depends_on:
       - redis
     networks:

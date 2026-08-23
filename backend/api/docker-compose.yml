@@ -4,10 +4,13 @@ services:
     container_name: melitrack-api
     env_file:
       - .env
+    environment:
+      LOG_FILE: /var/log/melitrack/api.log
     ports:
       - "${API_PORT}:8000"
     volumes:
       - .:/app
+      - ../logs:/var/log/melitrack
     command: >
       uvicorn main:app
       --host 0.0.0.0
