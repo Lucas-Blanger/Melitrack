@@ -1,0 +1,8 @@
+services:
+  loki:
+    image: grafana/loki:3.7.0
+    container_name: melitrack-loki
+    networks:
+      melitrack-network:
+        aliases:
+          - loki
