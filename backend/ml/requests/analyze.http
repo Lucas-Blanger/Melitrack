@@ -1,0 +1,20 @@
+@baseUrl = http://localhost:8003
+@mlToken = your-ml-service-token
+@inspectionId = 123e4567-e89b-12d3-a456-426614174000
+
+###
+# Enfileirar análise de foto de inspeção
+POST {{baseUrl}}/analyze
+X-ML-Service-Token: {{mlToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="inspection_id"
+
+{{inspectionId}}
+--boundary
+Content-Disposition: form-data; name="image"; filename="inspection.jpg"
+Content-Type: image/jpeg
+
+< ../../api/requests/hives/photos/photo.jpg
+--boundary--
