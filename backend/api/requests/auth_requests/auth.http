@@ -41,6 +41,40 @@ GET {{baseUrl}}/auth/google/callback?code=YOUR_CODE
 
 ###
 
+# Obter dados do usuário atual
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+###
+
+# Atualizar dados do usuário atual
+PUT {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Lucas Atualizado",
+  "meliponary_name": "Meliponário Central",
+  "inspection_frequency_days": 14,
+  "notify_health_alerts": true,
+  "notify_email": true
+}
+
+###
+
+# Alterar senha do usuário autenticado
+POST {{baseUrl}}/auth/change-password
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "current_password": "novaSenha123",
+  "new_password": "novaSenha456",
+  "confirm_password": "novaSenha456"
+}
+
+###
+
 ### Logout
 POST {{baseUrl}}/auth/logout
 Cookie: session={{accessToken}}
