@@ -1,0 +1,15 @@
+@baseUrl = http://localhost:8003
+@mlToken = your-ml-service-token
+
+###
+# Identificar espécie a partir de imagem
+POST {{baseUrl}}/species/identify
+X-ML-Service-Token: {{mlToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="image"; filename="bee.jpg"
+Content-Type: image/jpeg
+
+< ../../api/requests/hives/photos/photo.jpg
+--boundary--
