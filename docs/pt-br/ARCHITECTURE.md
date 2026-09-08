@@ -17,7 +17,7 @@ flowchart TB
     subgraph API_Stack["API Principal (FastAPI)"]
         API["FastAPI Web Server<br/>(Porta 8000)"]
         AUTH["Auth Module<br/>(JWT & Google OAuth)"]
-        HIVES_APP["Hives & Inspections Module"]
+        HIVES_APP["Modulo Colmeias e Inspeções"]
         LIMITER["Rate Limit Middleware"]
     end
 

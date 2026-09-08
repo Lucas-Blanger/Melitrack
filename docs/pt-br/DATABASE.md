@@ -7,9 +7,9 @@ O **Melitrack** adota uma estratégia de armazenamento **poliglota (híbrida)**,
 ## Diagrama de Banco de Dados
 
 O diagrama oficial de entidade-relacionamento (ER) do projeto está disponível em:
-[**Visualizar Diagrama do Banco de Dados**](melitrack_db%20.png)
+[**Visualizar Diagrama do Banco de Dados**](../melitrack_db%20.png)
 
-![Diagrama do Banco de Dados Melitrack](melitrack_db%20.png)
+![Diagrama do Banco de Dados Melitrack](../melitrack_db%20.png)
 
 ---
 

@@ -268,14 +268,14 @@ curl -X POST http://localhost:8000/hives/1/inspections/5/photos \
 
 ## Documentation Index
 
-Detailed topic guides are available in the [`docs/`](docs/) directory:
+Detailed topic guides are available in the [`docs/en/`](docs/en/) directory:
 
 | Document | Description |
 | :--- | :--- |
-| 🏗️ [**System Architecture**](docs/ARCHITECTURE.md) | In-depth microservices breakdown, Docker network, task queues, and logging flow. |
-| 🗄️ [**Database Model**](docs/DATABASE.md) | Hybrid database schema (PostgreSQL + MongoDB), collections, and ER diagram. |
-| 🔌 [**Services & APIs**](docs/SERVICES_AND_API.md) | Complete REST API specification, authentication rules, rate limits, and error handling. |
-| 🚀 [**Setup & Execution Guide**](docs/SETUP_AND_RUN.md) | Step-by-step instructions to launch the stack via Docker Compose and configure environment files. |
+| 🏗️ [**System Architecture**](docs/en/ARCHITECTURE.md) | In-depth microservices breakdown, Docker network, task queues, and logging flow. |
+| 🗄️ [**Database Model**](docs/en/DATABASE.md) | Hybrid database schema (PostgreSQL + MongoDB), collections, and ER diagram. |
+| 🔌 [**Services & APIs**](docs/en/SERVICES_AND_API.md) | Complete REST API specification, authentication rules, rate limits, and error handling. |
+| 🚀 [**Setup & Execution Guide**](docs/en/SETUP_AND_RUN.md) | Step-by-step instructions to launch the stack via Docker Compose and configure environment files. |
 
 ---
 
