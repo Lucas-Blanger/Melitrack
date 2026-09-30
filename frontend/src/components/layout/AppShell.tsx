@@ -14,6 +14,8 @@ import { useAuth } from "../../auth/AuthContext";
 import { HoneycombPattern } from "../HoneycombPattern";
 import { MelitrackLogo } from "../MelitrackLogo";
 
+import { Footer } from "./Footer";
+
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/hives", label: "Colmeias", icon: Boxes },
@@ -55,8 +57,6 @@ export function AppShell({
             <p className="text-xs text-neutral-400">Gestão de meliponário</p>
           </div>
         </div>
-
-
 
         <nav className="flex-1 space-y-0.5 overflow-auto p-3">
           {navItems.map((item) => (
@@ -128,7 +128,10 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto flex flex-col justify-between">
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </main>
       </div>
     </div>
   );
