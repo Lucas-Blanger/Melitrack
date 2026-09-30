@@ -28,6 +28,8 @@ import {
   verifyResetCode,
 } from "../api/auth";
 
+import { TermsModal } from "../components/TermsModal";
+
 type AuthMode = "login" | "register";
 type RecoveryStep = "email" | "code" | "reset";
 type Notice = { type: "success" | "error"; text: string } | null;
@@ -52,6 +54,8 @@ export default function Login({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<Notice>(() => getInitialNotice());
 
@@ -96,6 +100,10 @@ export default function Login({
       if (mode === "register") {
         if (!name.trim()) {
           throw new Error("Informe seu nome completo.");
+        }
+
+        if (!acceptedTerms) {
+          throw new Error("Você precisa ler e aceitar os Termos de Serviço para se cadastrar.");
         }
 
         await registerUser({ name: name.trim(), email, password });
@@ -352,6 +360,30 @@ export default function Login({
               </div>
             )}
 
+            {!recoveryStep && mode === "register" && (
+              <div className="flex items-start gap-2.5 pt-1 pb-1">
+                <input
+                  type="checkbox"
+                  id="accept-terms"
+                  checked={acceptedTerms}
+                  onChange={(event) => setAcceptedTerms(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-300 text-[#1D6A4A] focus:ring-[#1D6A4A] cursor-pointer"
+                  required
+                />
+                <label htmlFor="accept-terms" className="text-xs text-neutral-600 leading-snug cursor-pointer select-none">
+                  Li e aceito os{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowTermsModal(true)}
+                    className="font-semibold text-[#1D6A4A] underline hover:text-[#155438]"
+                  >
+                    Termos de Serviço
+                  </button>{" "}
+                  (incluindo a autorização de uso de fotos enviadas para treinamento da IA do sistema).
+                </label>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -396,16 +428,38 @@ export default function Login({
           )}
         </div>
 
-        <div className="flex justify-center mt-5 gap-1.5">
-          {[0.35, 0.55, 0.75].map((opacity) => (
-            <div
-              key={opacity}
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: "#E8A020", opacity }}
-            />
-          ))}
+        <div className="flex flex-col items-center mt-5 gap-2 text-center text-xs text-neutral-500">
+          <p>
+            Desenvolvido por{" "}
+            <a
+              href="https://www.linkedin.com/in/lucas-blanger-4668a2210/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-[#1D6A4A] hover:underline"
+            >
+              Lucas Blanger
+            </a>
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowTermsModal(true)}
+            className="text-neutral-500 hover:text-[#1D6A4A] underline transition-colors"
+          >
+            Termos de Serviço
+          </button>
+          <div className="flex justify-center mt-1 gap-1.5">
+            {[0.35, 0.55, 0.75].map((opacity) => (
+              <div
+                key={opacity}
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: "#E8A020", opacity }}
+              />
+            ))}
+          </div>
         </div>
       </div>
+
+      <TermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </div>
   );
 }
