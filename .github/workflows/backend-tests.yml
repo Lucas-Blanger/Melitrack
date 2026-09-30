@@ -82,10 +82,8 @@ jobs:
 
       - name: Run API tests
         run: |
-          cd backend/api
-          python -m pytest
+          python -m pytest backend/api/tests
 
       - name: Run ML tests
         run: |
-          cd backend/ml
-          python -m pytest
+          python -m pytest backend/ml/tests
