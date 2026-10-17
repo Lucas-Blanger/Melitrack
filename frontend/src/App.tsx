@@ -15,7 +15,6 @@ import HivesList from "./screens/HivesList";
 import InspectionsScreen from "./screens/InspectionsScreen";
 import Login from "./screens/Login";
 import SettingsScreen from "./screens/SettingsScreen";
-import SpeciesIdentifierScreen from "./screens/SpeciesIdentifierScreen";
 
 export default function App() {
   const navigate = useNavigate();
@@ -105,16 +104,6 @@ export default function App() {
           <ProtectedRoute>
             <AppShell>
               <HarvestsScreen />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/species"
-        element={
-          <ProtectedRoute>
-            <AppShell>
-              <SpeciesIdentifierScreen />
             </AppShell>
           </ProtectedRoute>
         }

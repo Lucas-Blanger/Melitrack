@@ -5,7 +5,6 @@ import {
   Droplets,
   LayoutDashboard,
   LogOut,
-  Search,
   Settings,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -21,7 +20,6 @@ const navItems = [
   { to: "/hives", label: "Colmeias", icon: Boxes },
   { to: "/inspections", label: "Inspeções", icon: ClipboardList },
   { to: "/harvests", label: "Colheitas", icon: Droplets },
-  { to: "/species", label: "Espécies", icon: Search },
   { to: "/settings", label: "Configurações", icon: Settings },
 ];
 
