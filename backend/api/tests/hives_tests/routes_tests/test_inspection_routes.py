@@ -122,9 +122,7 @@ def test_patch_analysis():
         processed_at=datetime.now(timezone.utc),
     )
 
-    app.dependency_overrides[inspections_routes.get_current_user_or_ml_service] = (
-        lambda: fake_user()
-    )
+    app.dependency_overrides[inspections_routes.get_current_user] = lambda: fake_user()
 
     try:
         with patch(

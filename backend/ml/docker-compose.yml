@@ -1,5 +1,6 @@
 services:
   ml:
+    profiles: ["ai"]
     build: .
     container_name: melitrack-ml
     env_file:
@@ -17,6 +18,7 @@ services:
       - melitrack-network
 
   ml-worker:
+    profiles: ["ai"]
     build: .
     container_name: melitrack-ml-worker
     command: celery -A app.tasks.celery_app worker --loglevel=info -Q ml --pool=threads --concurrency=4
@@ -33,6 +35,7 @@ services:
       - melitrack-network
 
   redis:
+    profiles: ["ai"]
     image: redis:7-alpine
     container_name: melitrack_redis
     ports:

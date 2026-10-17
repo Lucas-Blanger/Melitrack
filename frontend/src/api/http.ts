@@ -25,12 +25,22 @@ async function requestJson<T>(
     body = JSON.stringify(options.body);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    credentials: "include",
-    ...options,
-    headers,
-    body,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      credentials: "include",
+      ...options,
+      headers,
+      body,
+    });
+  } catch (error) {
+    if (error instanceof TypeError || (error instanceof Error && error.name === "NetworkError")) {
+      throw new Error(
+        "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
+      );
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const data = await response.json().catch(() => null);

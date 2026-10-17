@@ -71,49 +71,6 @@ class AuthService:
         return user
 
     @staticmethod
-    async def authenticate_google(
-        db: AsyncSession,
-        user_info: dict,
-    ) -> User:
-
-        google_id = user_info["sub"]
-
-        user = await crud.get_user_by_google_id(
-            db,
-            google_id,
-        )
-
-        if user:
-            user.picture = user_info.get("picture", getattr(user, "picture", ""))
-            user.auth_provider = "google"
-            await db.commit()
-            await db.refresh(user)
-            return user
-
-        user = await crud.get_user_by_email(
-            db,
-            user_info["email"],
-        )
-
-        if user:
-            user.google_id = google_id
-            user.picture = user_info.get("picture", user.picture)
-            user.auth_provider = "google"
-
-            await db.commit()
-            await db.refresh(user)
-
-            return user
-
-        return await crud.create_google_user(
-            db=db,
-            google_id=google_id,
-            name=user_info["name"],
-            email=user_info["email"],
-            picture=user_info.get("picture", ""),
-        )
-
-    @staticmethod
     def create_token(
         user_id: str,
         expires_delta: timedelta | None = None,

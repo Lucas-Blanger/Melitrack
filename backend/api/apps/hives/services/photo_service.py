@@ -7,7 +7,6 @@ from fastapi import UploadFile
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from core.exceptions import BadRequestError, NotFoundError
-from apps.hives.models import AnalysisStatus
 from apps.hives.schemas import PhotoResponse
 
 MAX_PHOTO_SIZE = 10 * 1024 * 1024
@@ -128,7 +127,6 @@ async def upload_inspection_photo(
             "size": len(content),
             "data": content,
             "uploaded_at": uploaded_at,
-            "ml_status": AnalysisStatus.pending.value,
         }
     )
 

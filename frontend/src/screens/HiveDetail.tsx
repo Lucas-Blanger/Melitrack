@@ -63,7 +63,7 @@ import type {
   Product,
 } from "../types/hives";
 
-type Tab = "inspections" | "harvests" | "ml";
+type Tab = "inspections" | "harvests";
 
 const anomalyCategoryLabels: Record<string, string> = {
   fungi: "Fungos",
@@ -80,7 +80,6 @@ interface DetailData {
   inspections: Inspection[];
   harvests: Harvest[];
   products: Product[];
-  analysis: Analysis | null;
 }
 
 export default function HiveDetail() {
@@ -191,7 +190,6 @@ export default function HiveDetail() {
           {[
             ["inspections", "Inspeções"],
             ["harvests", "Colheitas"],
-            ["ml", "Análise IA"],
           ].map(([id, label]) => (
             <button
               key={id}
@@ -236,14 +234,6 @@ export default function HiveDetail() {
       {tab === "harvests" && (
         <HarvestTab harvests={data.harvests} products={data.products} />
       )}
-      {tab === "ml" && (
-        <AnalysisTab
-          analysis={data.analysis}
-          latestInspection={latestInspection}
-          onCorrected={() => void reload()}
-        />
-      )}
-
       {showInspectionModal && (
         <NewInspectionModal
           hiveId={data.hive.id}
@@ -1188,9 +1178,5 @@ async function loadDetail(hiveId: string): Promise<DetailData> {
     listProducts(),
   ]);
 
-  const analysis = inspections[0]
-    ? await getInspectionAnalysis(inspections[0].id).catch(() => null)
-    : null;
-
-  return { hive, inspections, harvests, products, analysis };
+  return { hive, inspections, harvests, products };
 }

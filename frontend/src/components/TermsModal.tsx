@@ -1,4 +1,4 @@
-import { BrainCircuit, ExternalLink, FileText, ShieldCheck, User, X } from "lucide-react";
+import { ExternalLink, FileText, ShieldCheck, User, X } from "lucide-react";
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -43,8 +43,8 @@ export function TermsModal({ isOpen, onClose }: TermsModalProps) {
               <div className="space-y-1">
                 <h3 className="font-semibold text-[#1D6A4A]">Desenvolvimento e Autoria</h3>
                 <p className="text-xs text-neutral-600">
-                  O <strong>Melitrack</strong> é uma plataforma inteligente voltada à gestão de meliponários,
-                  monitoramento de abelhas sem ferrão (<em>Meliponini</em>), controle de produção e análises por IA.
+                  O <strong>Melitrack</strong> é uma plataforma voltada à gestão de meliponários,
+                  monitoramento de abelhas sem ferrão (<em>Meliponini</em>) e controle de produção.
                 </p>
                 <div className="pt-1 flex items-center gap-2 text-xs">
                   <span className="font-medium text-neutral-700">Desenvolvido por:</span>
@@ -60,23 +60,6 @@ export function TermsModal({ isOpen, onClose }: TermsModalProps) {
                 </div>
               </div>
             </div>
-          </section>
-
-          {/* AI Model Training Clause - Highlighted */}
-          <section className="rounded-xl border border-amber-200 bg-amber-50/60 p-4.5 space-y-2">
-            <div className="flex items-center gap-2 text-[#9A6200] font-semibold text-sm">
-              <BrainCircuit size={18} className="shrink-0 text-amber-600" />
-              <h4>Uso de Imagens e Treinamento de Inteligência Artificial</h4>
-            </div>
-            <p className="text-xs text-amber-950 leading-relaxed">
-              Ao utilizar a plataforma e enviar fotografias referentes a colmeias, caixas, discos de postura,
-              inspeções de manejo ou amostras de abelhas, <strong>o usuário concorda e autoriza expressamente</strong> que
-              tais imagens possam ser armazenadas, processadas e utilizadas pelo sistema <strong>Melitrack</strong> para o
-              <strong> treinamento, aprimoramento, validação e calibração contínua de seus modelos de Inteligência Artificial e Visão Computacional</strong>.
-            </p>
-            <p className="text-[11px] text-amber-800 italic">
-              Esta autorização permite melhorar a precisão na identificação automatizada de espécies e na avaliação de saúde das colônias para toda a comunidade de meliponicultores.
-            </p>
           </section>
 
           {/* Core Terms */}
@@ -96,11 +79,10 @@ export function TermsModal({ isOpen, onClose }: TermsModalProps) {
               bem como pelas informações de manejo, localização e registro de colheitas inseridas na aplicação.
             </p>
 
-            <h4 className="font-bold text-neutral-800 text-sm pt-2">3. Caráter Informativo do Diagnóstico por IA</h4>
+            <h4 className="font-bold text-neutral-800 text-sm pt-2">3. Caráter Informativo</h4>
             <p className="text-xs">
-              As análises fotográficas e relatórios de saúde gerados pelos algoritmos de Visão Computacional
-              constituem uma ferramenta auxiliar de apoio ao manejo meliponícola e não substituem o acompanhamento
-              técnico presencial especializado de agrônomos ou médicos veterinários.
+              As informações registradas na plataforma são auxiliares ao manejo meliponícola e não substituem o
+              acompanhamento técnico presencial especializado de agrônomos ou médicos veterinários.
             </p>
 
             <h4 className="font-bold text-neutral-800 text-sm pt-2">4. Privacidade e Segurança de Dados</h4>

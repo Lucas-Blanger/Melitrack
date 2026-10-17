@@ -22,44 +22,6 @@ async def get_user_by_id(db: AsyncSession, user_id: str) -> User | None:
     return result.scalars().first()
 
 
-async def get_user_by_google_id(
-    db: AsyncSession,
-    google_id: str,
-) -> User | None:
-    query = select(User).where(User.google_id == google_id)
-
-    result = await db.execute(query)
-
-    return result.scalars().first()
-
-
-async def create_google_user(
-    db: AsyncSession,
-    *,
-    google_id: str,
-    name: str,
-    email: str,
-    picture: str,
-) -> User:
-
-    user = User(
-        google_id=google_id,
-        name=name,
-        email=email,
-        picture=picture,
-        auth_provider="google",
-        hashed_password="",
-    )
-
-    db.add(user)
-
-    await db.commit()
-
-    await db.refresh(user)
-
-    return user
-
-
 async def create_user(db: AsyncSession, user_in: UserRegister) -> User:
     new_user = User(
         name=user_in.name,

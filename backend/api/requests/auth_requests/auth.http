@@ -27,16 +27,6 @@ Content-Type: application/json
   "password": "{{password}}"
 }
 
-# Login with Google
-GET {{baseUrl}}/auth/google
-
-###
-
-# Callback Google
-GET {{baseUrl}}/auth/google/callback?code=YOUR_CODE
-
-###
-
 @accessToken = {{login.response.body.access_token}}
 
 ###
