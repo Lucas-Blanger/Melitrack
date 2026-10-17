@@ -1,7 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from starlette.responses import RedirectResponse
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import get_settings
@@ -20,7 +19,6 @@ from .schemas import (
     ResetPasswordRequest,
 )
 from .services.service import AuthService
-from .services.google_service import oauth
 
 settings = get_settings()
 
@@ -144,70 +142,6 @@ async def change_password(
         new_password=request.new_password,
         confirm_password=request.confirm_password,
     )
-
-
-@router.get(
-    "/google",
-    dependencies=[
-        Depends(
-            rate_limit(
-                name="auth-google",
-                limit=settings.RATE_LIMIT_AUTH_GOOGLE_REQUESTS,
-                window_seconds=settings.RATE_LIMIT_AUTH_GOOGLE_WINDOW_SECONDS,
-                enabled=settings.RATE_LIMIT_ENABLED,
-            )
-        )
-    ],
-)
-async def login_google(request: Request):
-    redirect_to = request.query_params.get("redirect_to")
-    if redirect_to:
-        request.session["auth_redirect_to"] = redirect_to
-
-    return await oauth.google.authorize_redirect(
-        request,
-        settings.GOOGLE_REDIRECT_URI,
-    )
-
-
-@router.get("/google/callback")
-async def google_callback(
-    request: Request,
-    db: AsyncSession = Depends(get_db),
-):
-    try:
-        token = await oauth.google.authorize_access_token(request)
-    except Exception as exc:
-        raise HTTPException(
-            status_code=400,
-            detail="Google authentication failed",
-        ) from exc
-
-    user_info = token["userinfo"]
-    user = await AuthService.authenticate_google(db, user_info)
-    jwt = AuthService.create_token(user.id, timedelta(hours=24))
-    redirect_to = request.session.pop("auth_redirect_to", None)
-
-    if redirect_to:
-        redirect_url = redirect_to
-        if "?" in redirect_url:
-            redirect_url = f"{redirect_url}&auth=google"
-        else:
-            redirect_url = f"{redirect_url}?auth=google"
-
-        redirect_response = RedirectResponse(redirect_url)
-        redirect_response.set_cookie(
-            key="melitrack_session",
-            value=jwt,
-            httponly=True,
-            samesite="lax",
-            secure=settings.COOKIE_SECURE,
-            max_age=24 * 60 * 60,
-            path="/",
-        )
-        return redirect_response
-
-    return {"access_token": jwt}
 
 
 @router.post("/logout")
