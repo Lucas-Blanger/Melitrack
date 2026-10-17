@@ -1,4 +1,3 @@
-import { API_BASE_URL } from "./config";
 import { getJson, postJson, putJson } from "./http";
 import type { User } from "../types/auth";
 
@@ -58,26 +57,6 @@ export function resetPassword(body: {
   confirm_password: string;
 }) {
   return postJson("/auth/reset-password", body);
-}
-
-export function redirectToGoogleAuth() {
-  const redirectTo = `${window.location.origin}/dashboard`;
-  window.location.assign(
-    `${API_BASE_URL}/auth/google?redirect_to=${encodeURIComponent(redirectTo)}`,
-  );
-}
-
-export function getGoogleAuthTokenFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("auth") !== "google") {
-    return null;
-  }
-
-  return params.get("token");
-}
-
-export function storeAuthToken(token: string) {
-  window.localStorage.setItem("melitrack_token", token);
 }
 
 export function clearStoredAuthToken() {
