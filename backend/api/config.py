@@ -52,8 +52,6 @@ class Settings(BaseSettings):
     RATE_LIMIT_AUTH_REGISTER_WINDOW_SECONDS: int
     RATE_LIMIT_AUTH_PASSWORD_RESET_REQUESTS: int
     RATE_LIMIT_AUTH_PASSWORD_RESET_WINDOW_SECONDS: int
-    RATE_LIMIT_AUTH_GOOGLE_REQUESTS: int
-    RATE_LIMIT_AUTH_GOOGLE_WINDOW_SECONDS: int
 
     # Email config
     SMTP_HOST: str
@@ -61,15 +59,6 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str
     SMTP_PASSWORD: str
     SMTP_FROM: str
-
-    # Google OAuth2 config
-    GOOGLE_CLIENT_ID: str
-    GOOGLE_CLIENT_SECRET: str
-    GOOGLE_REDIRECT_URI: str
-
-    # ML service config
-    ML_SERVICE_URL: str
-    ML_SERVICE_TOKEN: str
 
     # CORS
     ALLOWED_ORIGINS: list[str]
