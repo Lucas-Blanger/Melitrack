@@ -109,7 +109,6 @@ Todos os serviços se comunicam de forma segura através de uma rede bridge comp
 | :---------------- | :-------------------- | :------------ | :---------------------- | :-------------------------- |
 | `api`             | `melitrack-api`       | 8000          | `${API_PORT}` (8000)    | Servidor API Principal      |
 | `db`              | `melitrack_db`        | 5432          | `${DB_PORT}` (5432)     | Banco Relacional PostgreSQL |
-| `mongo`           | `melitrack_photos`    | 27017         | `${MONGO_PORT}` (27017) | Banco NoSQL MongoDB         |
 | `ml`              | `melitrack-ml`        | 8000          | `${ML_PORT}` (8001)     | Servidor API de ML          |
 | `ml-worker`       | `melitrack-ml-worker` | -             | -                       | Worker Celery para ML       |
 | `redis`           | `melitrack_redis`     | 6379          | `${REDIS_PORT}` (6379)  | Fila e Cache                |

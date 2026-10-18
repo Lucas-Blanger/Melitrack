@@ -8,47 +8,20 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE_DIR))
 
+from config import get_settings
 from db.base import Base
 import apps.auth.models
 import apps.hives.models
-
-
-class AlembicDatabaseSettings(BaseSettings):
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
-    DB_HOST: str
-    DB_PORT: int
-    DATABASE_URL: str | None = None
-
-    model_config = SettingsConfigDict(
-        env_file=BASE_DIR / ".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-        extra="ignore",
-    )
-
-    def get_database_url(self) -> str:
-        if self.DATABASE_URL:
-            return self.DATABASE_URL
-
-        return (
-            f"postgresql+asyncpg://"
-            f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
-            f"{self.DB_HOST}:{self.DB_PORT}/{self.POSTGRES_DB}"
-        )
-
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-database_url = AlembicDatabaseSettings().get_database_url()
+database_url = get_settings().get_database_url()
 config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
 # Interpret the config file for Python logging.

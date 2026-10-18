@@ -1,5 +1,6 @@
 from pathlib import Path
 from functools import lru_cache
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -14,21 +15,13 @@ class Settings(BaseSettings):
     )
 
     # Database components
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
-    DB_HOST: str
-    DB_PORT: int
 
     # Database URL
     DATABASE_URL: str | None = None
 
     # Mongo DB config
-    MONGO_PORT: int
-    MONGO_USER: str
-    MONGO_PASSWORD: str
     MONGO_URL: str
-    MONGO_DB: str
+    MONGO_DB: str = "melitrack_photo"
 
     # Security
     SECRET_KEY: str
@@ -65,7 +58,25 @@ class Settings(BaseSettings):
 
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
-            return self.DATABASE_URL
+            parsed_url = urlsplit(self.DATABASE_URL)
+            scheme = parsed_url.scheme
+            if scheme in {"postgres", "postgresql", "postgresql+psycopg"}:
+                scheme = "postgresql+asyncpg"
+
+            query_params = []
+            for key, value in parse_qsl(parsed_url.query, keep_blank_values=True):
+                if key == "channel_binding":
+                    continue
+                if key == "sslmode":
+                    key = "ssl"
+                query_params.append((key, value))
+
+            return urlunsplit(
+                parsed_url._replace(
+                    scheme=scheme,
+                    query=urlencode(query_params),
+                )
+            )
 
         return (
             f"postgresql+asyncpg://"

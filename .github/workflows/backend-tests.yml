@@ -15,9 +15,6 @@ jobs:
       DB_HOST: localhost
       DB_PORT: 5432
 
-      MONGO_PORT: 27017
-      MONGO_USER: admin
-      MONGO_PASSWORD: 123456
       MONGO_DB: melitrack_photos_db
       MONGO_URL: mongodb://admin:123456@localhost:27017/?authSource=admin
 

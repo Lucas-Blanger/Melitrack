@@ -51,11 +51,8 @@ API_PORT=8000
 SECRET_KEY=seu_secret_key_jwt_super_seguro
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 
-MONGO_PORT=27017
-MONGO_USER=admin
-MONGO_PASSWORD=sua_senha_mongo
 MONGO_DB=melitrack_photo
-MONGO_URL=mongodb://admin:sua_senha_mongo@mongo:27017/?authSource=admin
+MONGO_URL=mongodb+srv://<usuario>:<senha>@<cluster>.mongodb.net/?retryWrites=true&w=majority
 
 ML_SERVICE_URL=http://ml:8000
 ML_SERVICE_TOKEN=dev-ml-service-token

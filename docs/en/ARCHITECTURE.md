@@ -109,7 +109,6 @@ All services communicate securely across a shared Docker bridge network named `m
 | :---------------- | :-------------------- | :------------ | :---------------------- | :-------------------------- |
 | `api`             | `melitrack-api`       | 8000          | `${API_PORT}` (8000)    | Core API Server             |
 | `db`              | `melitrack_db`        | 5432          | `${DB_PORT}` (5432)     | PostgreSQL Relational DB    |
-| `mongo`           | `melitrack_photos`    | 27017         | `${MONGO_PORT}` (27017) | MongoDB NoSQL Database      |
 | `ml`              | `melitrack-ml`        | 8000          | `${ML_PORT}` (8001)     | ML API Server               |
 | `ml-worker`       | `melitrack-ml-worker` | -             | -                       | Celery Worker for ML        |
 | `redis`           | `melitrack_redis`     | 6379          | `${REDIS_PORT}` (6379)  | Queue & Cache               |
