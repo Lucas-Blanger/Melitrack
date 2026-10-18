@@ -1,11 +1,10 @@
 import uuid
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from apps.hives.models import AnalysisStatus, ColonyHealth, Inspection, MLPrediction
-from apps.hives.schemas import AnalysisResponse, InspectionCreate
+from apps.hives.models import ColonyHealth, Inspection
+from apps.hives.schemas import InspectionCreate
 from apps.hives.services import inspection_service
 
 
@@ -87,118 +86,3 @@ async def test_get_inspection():
 
     get_owned_inspection_mock.assert_awaited_once_with(db, inspection_id, owner_id)
     assert inspection is expected_inspection
-
-
-@pytest.mark.asyncio
-async def test_ensure_pending_analysis_creates_prediction():
-    db = Mock()
-    db.execute = AsyncMock()
-    db.commit = AsyncMock()
-    db.add = Mock()
-
-    inspection_id = uuid.uuid4()
-
-    result = Mock()
-    result.scalars.return_value.first.return_value = None
-    db.execute.return_value = result
-
-    await inspection_service.ensure_pending_analysis(db, inspection_id)
-
-    db.add.assert_called_once()
-    db.commit.assert_awaited_once()
-    assert isinstance(db.add.call_args[0][0], MLPrediction)
-    assert db.add.call_args[0][0].inspection_id == inspection_id
-    assert db.add.call_args[0][0].status == AnalysisStatus.pending
-
-
-@pytest.mark.asyncio
-async def test_ensure_pending_analysis_skips_existing_prediction():
-    db = Mock()
-    db.execute = AsyncMock()
-    db.commit = AsyncMock()
-    db.add = Mock()
-
-    inspection_id = uuid.uuid4()
-
-    result = Mock()
-    result.scalars.return_value.first.return_value = Mock()
-    db.execute.return_value = result
-
-    await inspection_service.ensure_pending_analysis(db, inspection_id)
-
-    db.add.assert_not_called()
-    db.commit.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_get_inspection_analysis_returns_pending_when_missing():
-    db = AsyncMock()
-    owner_id = uuid.uuid4()
-    inspection_id = uuid.uuid4()
-
-    inspection = Inspection(
-        owner_id=owner_id,
-        hive_id=uuid.uuid4(),
-        health=ColonyHealth.good,
-    )
-    inspection.id = inspection_id
-
-    result = Mock()
-    result.scalars.return_value.first.return_value = None
-
-    db.execute.return_value = result
-
-    with patch(
-        "apps.hives.services.inspection_service.get_owned_inspection",
-        new=AsyncMock(return_value=inspection),
-    ):
-        analysis = await inspection_service.get_inspection_analysis(
-            db, owner_id, inspection_id
-        )
-
-    assert isinstance(analysis, AnalysisResponse)
-    assert analysis.status == AnalysisStatus.pending
-
-
-@pytest.mark.asyncio
-async def test_get_inspection_analysis_returns_existing_prediction():
-    db = AsyncMock()
-    owner_id = uuid.uuid4()
-    inspection_id = uuid.uuid4()
-
-    inspection = Inspection(
-        owner_id=owner_id,
-        hive_id=uuid.uuid4(),
-        health=ColonyHealth.good,
-    )
-    inspection.id = inspection_id
-
-    prediction = MLPrediction(
-        inspection_id=inspection_id,
-        status=AnalysisStatus.processed,
-        model_name="modelo-x",
-        result={"label": "saudável"},
-        confidence=0.91,
-        error_message=None,
-        processed_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
-    )
-
-    result = Mock()
-    result.scalars.return_value.first.return_value = prediction
-
-    db.execute.return_value = result
-
-    with patch(
-        "apps.hives.services.inspection_service.get_owned_inspection",
-        new=AsyncMock(return_value=inspection),
-    ):
-        analysis = await inspection_service.get_inspection_analysis(
-            db, owner_id, inspection_id
-        )
-
-    assert analysis.status == AnalysisStatus.processed
-    assert analysis.model_name == "modelo-x"
-    assert analysis.result == {"label": "saudável"}
-    assert analysis.confidence == 0.91
-    assert analysis.error_message is None
-    assert analysis.processed_at == datetime(2024, 1, 1, tzinfo=timezone.utc)

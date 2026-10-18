@@ -37,13 +37,6 @@ jobs:
       SMTP_PASSWORD: test
       SMTP_FROM: test@example.com
 
-      GOOGLE_CLIENT_ID: test-google-client-id
-      GOOGLE_CLIENT_SECRET: test-google-client-secret
-      GOOGLE_REDIRECT_URI: http://localhost:8000/auth/google/callback
-
-      ML_SERVICE_URL: http://localhost:8001
-      ML_SERVICE_TOKEN: test-ml-token
-
       RATE_LIMIT_ENABLED: false
       RATE_LIMIT_DEFAULT_REQUESTS: 300
       RATE_LIMIT_DEFAULT_WINDOW_SECONDS: 60
@@ -53,9 +46,6 @@ jobs:
       RATE_LIMIT_AUTH_REGISTER_WINDOW_SECONDS: 3600
       RATE_LIMIT_AUTH_PASSWORD_RESET_REQUESTS: 3
       RATE_LIMIT_AUTH_PASSWORD_RESET_WINDOW_SECONDS: 900
-      RATE_LIMIT_AUTH_GOOGLE_REQUESTS: 20
-      RATE_LIMIT_AUTH_GOOGLE_WINDOW_SECONDS: 60
-
       ALLOWED_ORIGINS: '["http://localhost:3000"]'
 
     steps:
@@ -69,21 +59,12 @@ jobs:
           cache: "pip"
           cache-dependency-path: |
             backend/api/requirements-dev.txt
-            backend/ml/requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/api/requirements-dev.txt
 
-      - name: Install ML dependencies
-        run: |
-          pip install -r backend/ml/requirements.txt
-
       - name: Run API tests
         run: |
           python -m pytest backend/api/tests
-
-      - name: Run ML tests
-        run: |
-          python -m pytest backend/ml/tests
