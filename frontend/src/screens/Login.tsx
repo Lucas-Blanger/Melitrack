@@ -5,6 +5,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import { useLocation } from "react-router-dom";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -41,6 +42,8 @@ export default function Login({
   onLogin,
   onModeChange,
 }: LoginProps) {
+  const location = useLocation();
+  const routeNotice = (location.state as { notice?: string } | null)?.notice;
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [recoveryStep, setRecoveryStep] = useState<RecoveryStep | null>(null);
   const [showPass, setShowPass] = useState(false);
@@ -53,7 +56,9 @@ export default function Login({
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [notice, setNotice] = useState<Notice>(null);
+  const [notice, setNotice] = useState<Notice>(
+    routeNotice ? { type: "error", text: routeNotice } : null,
+  );
 
   const title = recoveryStep
     ? "Recuperar senha"
@@ -501,6 +506,14 @@ function getSubmitLabel(mode: AuthMode, recoveryStep: RecoveryStep | null) {
 }
 
 function getErrorMessage(error: unknown) {
-  if (error instanceof Error) return error.message;
+  if (error instanceof Error) {
+    if (error.message === "Email already registered") {
+      return "Este e-mail já está cadastrado.";
+    }
+    if (error.message === "This account uses Google authentication") {
+      return "Esta conta foi criada com o Google. Entre usando esse método.";
+    }
+    return error.message;
+  }
   return "Erro ao processar solicitação.";
 }

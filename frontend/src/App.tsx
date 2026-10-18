@@ -147,7 +147,16 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (status === "guest") {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{
+          from: location,
+          notice: "Você precisa entrar na sua conta para acessar esta página.",
+        }}
+      />
+    );
   }
 
   return children;

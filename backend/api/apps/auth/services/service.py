@@ -31,7 +31,7 @@ class AuthService:
                 "Registration failed: email %s already exists",
                 user_data.email,
             )
-            raise BadRequestError(detail="Email already registered")
+            raise BadRequestError(detail="Este e-mail já está cadastrado.")
 
         user_data.password = get_password_hash(user_data.password)
 
@@ -57,7 +57,7 @@ class AuthService:
         # User created via Google does not have a password.
         if not user.hashed_password:
             logger.warning("Authentication failed: user has no password configured")
-            raise UnauthorizedError(detail="This account uses Google authentication")
+            raise UnauthorizedError(detail="Esta conta foi criada com o Google. Entre usando esse método.")
 
         if not verify_password(
             login_data.password,
@@ -163,7 +163,7 @@ class AuthService:
         if user_data.email and user_data.email != user.email:
             existing_user = await crud.get_user_by_email(db, user_data.email)
             if existing_user and existing_user.id != user.id:
-                raise BadRequestError(detail="Email already registered")
+                raise BadRequestError(detail="Este e-mail já está cadastrado.")
 
         update_data = user_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
@@ -174,7 +174,7 @@ class AuthService:
             await db.refresh(user)
         except IntegrityError as exc:
             await db.rollback()
-            raise BadRequestError(detail="Email already registered") from exc
+            raise BadRequestError(detail="Este e-mail já está cadastrado.") from exc
 
         return user
 

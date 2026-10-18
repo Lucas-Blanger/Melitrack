@@ -93,7 +93,7 @@ async def login(
         key="melitrack_session",
         value=token,
         httponly=True,
-        samesite="lax",
+        samesite="none" if settings.COOKIE_SECURE else "lax",
         secure=settings.COOKIE_SECURE,
         max_age=24 * 60 * 60,  # 24 hours
     )
@@ -150,8 +150,10 @@ async def logout(response: Response) -> dict:
         "melitrack_session",
         path="/",
         secure=settings.COOKIE_SECURE,
+        httponly=True,
+        samesite="none" if settings.COOKIE_SECURE else "lax",
     )
-    return {"message": "Logged out successfully"}
+    return {"message": "Sessão encerrada com sucesso."}
 
 
 @router.post(
