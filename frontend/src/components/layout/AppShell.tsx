@@ -5,6 +5,7 @@ import {
   Droplets,
   LayoutDashboard,
   LogOut,
+  MessageSquareText,
   Settings,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -21,6 +22,7 @@ const navItems = [
   { to: "/inspections", label: "Inspeções", icon: ClipboardList },
   { to: "/harvests", label: "Colheitas", icon: Droplets },
   { to: "/settings", label: "Configurações", icon: Settings },
+  { to: "/feedback", label: "Feedback", icon: MessageSquareText },
 ];
 
 export function AppShell({

@@ -4,6 +4,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from config import get_settings
 from apps.auth.routes import router as auth_router
+from apps.feedback.routes import router as feedback_router
 from apps.health_service.routes.health_routes import router as health_router
 from apps.hives.routes import router as hives_router
 from core.logger import get_logger
@@ -40,5 +41,6 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(feedback_router)
 app.include_router(health_router)
 app.include_router(hives_router)

@@ -10,6 +10,7 @@ import { useAuth } from "./auth/AuthContext";
 import { AppShell } from "./components/layout/AppShell";
 import Dashboard from "./screens/Dashboard";
 import HarvestsScreen from "./screens/HarvestsScreen";
+import FeedbackScreen from "./screens/FeedbackScreen";
 import HiveDetail from "./screens/HiveDetail";
 import HivesList from "./screens/HivesList";
 import InspectionsScreen from "./screens/InspectionsScreen";
@@ -114,6 +115,16 @@ export default function App() {
           <ProtectedRoute>
             <AppShell>
               <SettingsScreen />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/feedback"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <FeedbackScreen />
             </AppShell>
           </ProtectedRoute>
         }

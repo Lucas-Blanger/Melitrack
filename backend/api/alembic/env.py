@@ -15,6 +15,7 @@ sys.path.insert(0, str(BASE_DIR))
 from config import get_settings
 from db.base import Base
 import apps.auth.models
+import apps.feedback.models
 import apps.hives.models
 
 # this is the Alembic Config object, which provides

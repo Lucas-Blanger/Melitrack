@@ -20,6 +20,7 @@ services:
       - melitrack-network
 
   db:
+    profiles: ["local-db"]
     image: postgres:16
     container_name: melitrack_db
     restart: always

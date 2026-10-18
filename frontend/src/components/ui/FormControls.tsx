@@ -5,13 +5,21 @@ interface SelectProps {
   onChange: (value: string) => void;
   children: ReactNode;
   className?: string;
+  required?: boolean;
 }
 
-export function Select({ value, onChange, children, className = "" }: SelectProps) {
+export function Select({
+  value,
+  onChange,
+  children,
+  className = "",
+  required,
+}: SelectProps) {
   return (
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
+      required={required}
       className={`rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-700 outline-none transition-colors focus:border-emerald-800 ${className}`}
     >
       {children}
