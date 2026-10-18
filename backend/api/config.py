@@ -18,6 +18,11 @@ class Settings(BaseSettings):
 
     # Database URL
     DATABASE_URL: str | None = None
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "melitrack"
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 5432
 
     # Mongo DB config
     MONGO_URL: str
