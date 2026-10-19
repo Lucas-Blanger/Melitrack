@@ -13,6 +13,8 @@
 
 [🇺🇸 English Version](README.md)
 
+🌐 **Access the system:** [melitrack.vercel.app](https://melitrack.vercel.app/)
+
 ## Sobre
 
 O **Melitrack** é uma plataforma moderna desenvolvida para auxiliar meliponicultores no manejo eficiente de colmeias de abelhas sem ferrão (_Meliponini_). O sistema combina cadastro geolocalizado, registro de inspeções periódicas, análise inteligente de imagens por visão computacional (identificação de espécies e avaliação de saúde), controle quantitativo de colheitas e observabilidade completa do ecossistema.
@@ -270,11 +272,11 @@ curl -X POST http://localhost:8000/hives/1/inspections/5/photos \
 
 Guias detalhados de cada tópico estão disponíveis no diretório [`docs/pt-br/`](docs/pt-br/):
 
-| Documento | Descrição |
-| :--- | :--- |
-| 🏗️ [**Arquitetura do Sistema**](docs/pt-br/ARCHITECTURE.md) | Detalhamento dos microserviços, rede Docker, filas de tarefas e fluxo de logs. |
-| 🗄️ [**Modelo de Banco de Dados**](docs/pt-br/DATABASE.md) | Esquema híbrido de banco de dados (PostgreSQL + MongoDB), coleções e diagrama ER. |
-| 🔌 [**Serviços & APIs**](docs/pt-br/SERVICES_AND_API.md) | Especificação completa da API REST, regras de autenticação, rate limit e tratamento de erros. |
+| Documento                                                           | Descrição                                                                                     |
+| :------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------- |
+| 🏗️ [**Arquitetura do Sistema**](docs/pt-br/ARCHITECTURE.md)         | Detalhamento dos microserviços, rede Docker, filas de tarefas e fluxo de logs.                |
+| 🗄️ [**Modelo de Banco de Dados**](docs/pt-br/DATABASE.md)           | Esquema híbrido de banco de dados (PostgreSQL + MongoDB), coleções e diagrama ER.             |
+| 🔌 [**Serviços & APIs**](docs/pt-br/SERVICES_AND_API.md)            | Especificação completa da API REST, regras de autenticação, rate limit e tratamento de erros. |
 | 🚀 [**Guia de Instalação e Execução**](docs/pt-br/SETUP_AND_RUN.md) | Passo a passo para executar a aplicação via Docker Compose e configurar arquivos de ambiente. |
 
 ---

@@ -14,9 +14,11 @@
 
 [🇧🇷 Versão em Português](README.pt-BR.md)
 
+🌐 **Acesse o sistema:** [melitrack.vercel.app](https://melitrack.vercel.app/)
+
 ## About
 
-Melitrack is a modern platform designed specifically for stingless beekeepers (*Meliponini*). It combines hive geolocations, periodic inspection logging, AI-driven image analysis for species identification and colony health evaluation, harvest tracking, and real-time ecosystem observability in a single integrated solution.
+Melitrack is a modern platform designed specifically for stingless beekeepers (_Meliponini_). It combines hive geolocations, periodic inspection logging, AI-driven image analysis for species identification and colony health evaluation, harvest tracking, and real-time ecosystem observability in a single integrated solution.
 
 Built with a resilient microservices architecture, Melitrack offers a decoupled system separating core web business logic, asynchronous machine learning task queues, polyglot storage, and an observability pipeline.
 
@@ -36,7 +38,7 @@ Built with a resilient microservices architecture, Melitrack offers a decoupled 
 
 ### Hive Management Module
 
-- ✅ Geolocated hive registration (latitude/longitude, species like *Jataí*, *Mandaçaia*, *Uruçu*, *Bugia*, box types like INPA, AF)
+- ✅ Geolocated hive registration (latitude/longitude, species like _Jataí_, _Mandaçaia_, _Uruçu_, _Bugia_, box types like INPA, AF)
 - ✅ Comprehensive history of photos stored in MongoDB GridFS/documents
 - ✅ Individual hive details, edit operations, and cascading deletes
 
@@ -271,11 +273,11 @@ curl -X POST http://localhost:8000/hives/1/inspections/5/photos \
 
 Detailed topic guides are available in the [`docs/en/`](docs/en/) directory:
 
-| Document | Description |
-| :--- | :--- |
-| 🏗️ [**System Architecture**](docs/en/ARCHITECTURE.md) | In-depth microservices breakdown, Docker network, task queues, and logging flow. |
-| 🗄️ [**Database Model**](docs/en/DATABASE.md) | Hybrid database schema (PostgreSQL + MongoDB), collections, and ER diagram. |
-| 🔌 [**Services & APIs**](docs/en/SERVICES_AND_API.md) | Complete REST API specification, authentication rules, rate limits, and error handling. |
+| Document                                                   | Description                                                                                       |
+| :--------------------------------------------------------- | :------------------------------------------------------------------------------------------------ |
+| 🏗️ [**System Architecture**](docs/en/ARCHITECTURE.md)      | In-depth microservices breakdown, Docker network, task queues, and logging flow.                  |
+| 🗄️ [**Database Model**](docs/en/DATABASE.md)               | Hybrid database schema (PostgreSQL + MongoDB), collections, and ER diagram.                       |
+| 🔌 [**Services & APIs**](docs/en/SERVICES_AND_API.md)      | Complete REST API specification, authentication rules, rate limits, and error handling.           |
 | 🚀 [**Setup & Execution Guide**](docs/en/SETUP_AND_RUN.md) | Step-by-step instructions to launch the stack via Docker Compose and configure environment files. |
 
 ---
