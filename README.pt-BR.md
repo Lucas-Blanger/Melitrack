@@ -13,7 +13,7 @@
 
 [🇺🇸 English Version](README.md)
 
-🌐 **Access the system:** [melitrack.vercel.app](https://melitrack.vercel.app/)
+🌐 **Acesse o sistema:** [melitrack.vercel.app](https://melitrack.vercel.app/)
 
 ## Sobre
 

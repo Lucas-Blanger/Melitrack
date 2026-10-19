@@ -14,7 +14,7 @@
 
 [🇧🇷 Versão em Português](README.pt-BR.md)
 
-🌐 **Acesse o sistema:** [melitrack.vercel.app](https://melitrack.vercel.app/)
+🌐 **Access the system:** [melitrack.vercel.app](https://melitrack.vercel.app/)
 
 ## About
 
