@@ -79,7 +79,7 @@ def test_logout():
 
     assert response.status_code == 200
 
-    assert response.json() == {"message": "Logged out successfully"}
+    assert response.json() == {"message": "Sessão encerrada com sucesso."}
 
 
 def test_forgot_password_route():
