@@ -1,7 +1,7 @@
 import { Boxes, MapPin, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { createHive, listHivePhotos, listHives } from "../api/hives";
 import { HealthDot } from "../components/badges/HealthDot";
 import { TypeBadge } from "../components/badges/TypeBadge";
@@ -19,6 +19,8 @@ import type { Hive, HiveType } from "../types/hives";
 
 export default function HivesList() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const routeNotice = (location.state as { notice?: string } | null)?.notice;
   const { data, loading, error, reload } = useAsync(listHives, []);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -41,6 +43,11 @@ export default function HivesList() {
 
   return (
     <div className="mx-auto max-w-screen-xl p-5 sm:p-8">
+      {routeNotice && (
+        <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          {routeNotice}
+        </p>
+      )}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-neutral-800">Colmeias</h1>

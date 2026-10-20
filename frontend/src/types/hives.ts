@@ -26,6 +26,8 @@ export interface HiveCreate {
   notes?: string | null;
 }
 
+export type HiveUpdate = Partial<HiveCreate>;
+
 export interface Photo {
   id: string;
   filename: string;

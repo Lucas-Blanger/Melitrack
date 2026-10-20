@@ -1,8 +1,11 @@
 import {
+  AlertTriangle,
   Boxes,
   Calendar,
   ClipboardCheck,
   Droplets,
+  Pencil,
+  Trash2,
   MapPin,
   Plus,
 } from "lucide-react";
@@ -12,16 +15,18 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   createHarvest,
   createInspection,
+  deleteHive,
   getHive,
   listHivePhotos,
   listHarvestsByHive,
   listInspectionsByHive,
   listProducts,
   uploadInspectionPhoto,
+  updateHive,
 } from "../api/hives";
 import { HealthBadge } from "../components/badges/HealthBadge";
 import { TypeBadge } from "../components/badges/TypeBadge";
@@ -55,9 +60,15 @@ interface DetailData {
 
 export default function HiveDetail() {
   const { hiveId } = useParams();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("inspections");
   const [showInspectionModal, setShowInspectionModal] = useState(false);
   const [showHarvestModal, setShowHarvestModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const { data, loading, error, reload } = useAsync(
     () => loadDetail(hiveId ?? ""),
     [hiveId],
@@ -103,6 +114,19 @@ export default function HiveDetail() {
 
   const latestInspection = data.inspections[0];
   const health = latestInspection?.health ?? "regular";
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteHive(data.hive.id);
+      navigate("/hives", { replace: true, state: { notice: "Colmeia excluída com sucesso." } });
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Não foi possível excluir a colmeia.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-screen-xl p-5 sm:p-8">
@@ -153,8 +177,35 @@ export default function HiveDetail() {
             label="Notas"
             value={data.hive.notes || "Nenhuma nota cadastrada"}
           />
+          <div className="mt-auto flex flex-wrap gap-2 border-t border-neutral-100 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowEditModal(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+            >
+              <Pencil size={14} />
+              Editar dados
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteError(null);
+                setShowDeleteModal(true);
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+            >
+              <Trash2 size={14} />
+              Excluir colmeia
+            </button>
+          </div>
         </Card>
       </div>
+
+      {notice && (
+        <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          {notice}
+        </p>
+      )}
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex rounded-lg bg-[#ede9df] p-1">
@@ -226,6 +277,144 @@ export default function HiveDetail() {
           }}
         />
       )}
+      {showEditModal && (
+        <EditHiveModal
+          hive={data.hive}
+          onClose={() => setShowEditModal(false)}
+          onSaved={() => {
+            setShowEditModal(false);
+            setNotice("Dados da colmeia atualizados.");
+            void reload();
+          }}
+        />
+      )}
+      {showDeleteModal && (
+        <Modal title="Excluir colmeia" onClose={() => setShowDeleteModal(false)}>
+          <div className="space-y-4">
+            <div className="flex gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+              <p>
+                Esta ação é permanente. As inspeções, colheitas e fotos associadas também serão excluídas.
+              </p>
+            </div>
+            <p className="text-sm text-neutral-700">
+              Para confirmar, digite o nome da colmeia: <strong>{data.hive.name}</strong>
+            </p>
+            <DeleteHiveConfirmation
+              hiveName={data.hive.name}
+              deleting={deleting}
+              error={deleteError}
+              onCancel={() => setShowDeleteModal(false)}
+              onConfirm={() => void handleDelete()}
+            />
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function EditHiveModal({
+  hive,
+  onClose,
+  onSaved,
+}: {
+  hive: Hive;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(hive.name);
+  const [species, setSpecies] = useState(hive.species);
+  const [type, setType] = useState(hive.type);
+  const [location, setLocation] = useState(hive.location_description ?? "");
+  const [notes, setNotes] = useState(hive.notes ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      await updateHive(hive.id, {
+        name: name.trim(),
+        species: species.trim(),
+        type,
+        location_description: location.trim() || null,
+        notes: notes.trim() || null,
+      });
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível salvar as alterações.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal title="Editar colmeia" onClose={onClose}>
+      <form onSubmit={submit} className="space-y-4">
+        <Field label="Nome">
+          <TextInput value={name} onChange={(event) => setName(event.target.value)} required maxLength={150} />
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Espécie">
+            <TextInput value={species} onChange={(event) => setSpecies(event.target.value)} required maxLength={100} />
+          </Field>
+          <Field label="Tipo">
+            <Select value={type} onChange={(value) => setType(value as Hive["type"])} className="w-full">
+              <option value="caixa">Caixa</option>
+              <option value="isca">Isca</option>
+            </Select>
+          </Field>
+        </div>
+        <Field label="Localização">
+          <TextInput value={location} onChange={(event) => setLocation(event.target.value)} maxLength={255} />
+        </Field>
+        <Field label="Notas">
+          <TextArea value={notes} onChange={(event) => setNotes(event.target.value)} />
+        </Field>
+        {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+        <ModalActions onClose={onClose} submitting={saving} />
+      </form>
+    </Modal>
+  );
+}
+
+function DeleteHiveConfirmation({
+  hiveName,
+  deleting,
+  error,
+  onCancel,
+  onConfirm,
+}: {
+  hiveName: string;
+  deleting: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const [confirmation, setConfirmation] = useState("");
+  const matchesName = confirmation.trim().toLocaleLowerCase() === hiveName.trim().toLocaleLowerCase();
+
+  return (
+    <div className="space-y-3">
+      <TextInput
+        value={confirmation}
+        onChange={(event) => setConfirmation(event.target.value)}
+        aria-label="Confirme o nome da colmeia"
+        placeholder="Nome da colmeia"
+        autoFocus
+      />
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      <div className="flex justify-end gap-2 pt-1">
+        <button type="button" onClick={onCancel} disabled={deleting} className="rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
+          Cancelar
+        </button>
+        <button type="button" onClick={onConfirm} disabled={!matchesName || deleting} className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">
+          {deleting ? "Excluindo..." : "Excluir permanentemente"}
+        </button>
+      </div>
     </div>
   );
 }

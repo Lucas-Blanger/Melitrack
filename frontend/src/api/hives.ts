@@ -1,4 +1,11 @@
-import { getJson, patchJson, postFormData, postJson } from "./http";
+import {
+  deleteJson,
+  getJson,
+  patchJson,
+  postFormData,
+  postJson,
+  putJson,
+} from "./http";
 import type {
   Analysis,
   AnalysisCorrectionUpdate,
@@ -8,6 +15,7 @@ import type {
   HarvestSummary,
   Hive,
   HiveCreate,
+  HiveUpdate,
   Inspection,
   InspectionCreate,
   Photo,
@@ -20,6 +28,14 @@ export function listHives() {
 
 export function getHive(id: string) {
   return getJson<Hive>(`/hives/${id}`);
+}
+
+export function updateHive(id: string, body: HiveUpdate) {
+  return putJson<Hive>(`/hives/${id}`, body);
+}
+
+export function deleteHive(id: string) {
+  return deleteJson(`/hives/${id}`);
 }
 
 export function listHivePhotos(hiveId: string) {
