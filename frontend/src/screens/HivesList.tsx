@@ -2,7 +2,12 @@ import { Boxes, MapPin, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { createHive, listHivePhotos, listHives } from "../api/hives";
+import {
+  createHive,
+  listHivePhotos,
+  listHives,
+  uploadHivePhoto,
+} from "../api/hives";
 import { HealthDot } from "../components/badges/HealthDot";
 import { TypeBadge } from "../components/badges/TypeBadge";
 import { Card } from "../components/Card";
@@ -17,6 +22,8 @@ import { LoadingState, PageState } from "../components/ui/PageState";
 import { useAsync } from "../hooks/useAsync";
 import type { Hive, HiveType } from "../types/hives";
 
+type HiveCreationNotice = { type: "success" | "warning"; text: string };
+
 export default function HivesList() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,6 +32,9 @@ export default function HivesList() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
+  const [actionNotice, setActionNotice] = useState<HiveCreationNotice | null>(
+    routeNotice ? { type: "success", text: routeNotice } : null,
+  );
 
   const hives = useMemo(() => data ?? [], [data]);
   const filtered = useMemo(() => {
@@ -43,9 +53,16 @@ export default function HivesList() {
 
   return (
     <div className="mx-auto max-w-screen-xl p-5 sm:p-8">
-      {routeNotice && (
-        <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {routeNotice}
+      {actionNotice && (
+        <p
+          role="status"
+          className={`mb-4 rounded-lg border px-4 py-3 text-sm ${
+            actionNotice.type === "warning"
+              ? "border-amber-200 bg-amber-50 text-amber-900"
+              : "border-emerald-200 bg-emerald-50 text-emerald-800"
+          }`}
+        >
+          {actionNotice.text}
         </p>
       )}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -130,8 +147,9 @@ export default function HivesList() {
       {showModal && (
         <NewHiveModal
           onClose={() => setShowModal(false)}
-          onCreated={() => {
+          onCreated={(notice) => {
             setShowModal(false);
+            setActionNotice(notice);
             void reload();
           }}
         />
@@ -208,7 +226,7 @@ function NewHiveModal({
   onCreated,
 }: {
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (notice: HiveCreationNotice) => void;
 }) {
   const [name, setName] = useState("");
   const [species, setSpecies] = useState("");
@@ -225,17 +243,28 @@ function NewHiveModal({
     setError(null);
 
     try {
-      await createHive(
-        {
-          name,
-          species,
-          type,
-          location_description: location || null,
-          notes: notes || null,
-        },
-        photoFile ?? undefined,
-      );
-      onCreated();
+      const hive = await createHive({
+        name,
+        species,
+        type,
+        location_description: location || null,
+        notes: notes || null,
+      });
+
+      if (photoFile) {
+        try {
+          await uploadHivePhoto(hive.id, photoFile);
+          onCreated({ type: "success", text: "Colmeia e foto salvas com sucesso." });
+        } catch (photoError) {
+          console.warn("Falha ao enviar a foto da colmeia:", photoError);
+          onCreated({
+            type: "warning",
+            text: "Colmeia salva, mas não foi possível enviar a foto. Você pode tentar novamente mais tarde.",
+          });
+        }
+      } else {
+        onCreated({ type: "success", text: "Colmeia cadastrada com sucesso." });
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Não foi possível cadastrar.",

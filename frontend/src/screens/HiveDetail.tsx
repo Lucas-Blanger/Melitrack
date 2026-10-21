@@ -50,6 +50,7 @@ import type {
 } from "../types/hives";
 
 type Tab = "inspections" | "harvests";
+type SaveNotice = { type: "success" | "warning"; text: string };
 
 interface DetailData {
   hive: Hive;
@@ -68,7 +69,7 @@ export default function HiveDetail() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<SaveNotice | null>(null);
   const { data, loading, error, reload } = useAsync(
     () => loadDetail(hiveId ?? ""),
     [hiveId],
@@ -202,8 +203,15 @@ export default function HiveDetail() {
       </div>
 
       {notice && (
-        <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {notice}
+        <p
+          role="status"
+          className={`mb-4 rounded-lg border px-4 py-3 text-sm ${
+            notice.type === "warning"
+              ? "border-amber-200 bg-amber-50 text-amber-900"
+              : "border-emerald-200 bg-emerald-50 text-emerald-800"
+          }`}
+        >
+          {notice.text}
         </p>
       )}
 
@@ -260,8 +268,9 @@ export default function HiveDetail() {
         <NewInspectionModal
           hiveId={data.hive.id}
           onClose={() => setShowInspectionModal(false)}
-          onCreated={() => {
+          onCreated={(saveNotice) => {
             setShowInspectionModal(false);
+            setNotice(saveNotice);
             void reload();
           }}
         />
@@ -271,8 +280,9 @@ export default function HiveDetail() {
           hiveId={data.hive.id}
           products={data.products}
           onClose={() => setShowHarvestModal(false)}
-          onCreated={() => {
+          onCreated={(saveNotice) => {
             setShowHarvestModal(false);
+            setNotice(saveNotice);
             void reload();
           }}
         />
@@ -283,7 +293,7 @@ export default function HiveDetail() {
           onClose={() => setShowEditModal(false)}
           onSaved={() => {
             setShowEditModal(false);
-            setNotice("Dados da colmeia atualizados.");
+            setNotice({ type: "success", text: "Dados da colmeia atualizados." });
             void reload();
           }}
         />
@@ -298,10 +308,9 @@ export default function HiveDetail() {
               </p>
             </div>
             <p className="text-sm text-neutral-700">
-              Para confirmar, digite o nome da colmeia: <strong>{data.hive.name}</strong>
+              Deseja realmente excluir <strong>{data.hive.name}</strong>?
             </p>
             <DeleteHiveConfirmation
-              hiveName={data.hive.name}
               deleting={deleting}
               error={deleteError}
               onCancel={() => setShowDeleteModal(false)}
@@ -382,37 +391,25 @@ function EditHiveModal({
 }
 
 function DeleteHiveConfirmation({
-  hiveName,
   deleting,
   error,
   onCancel,
   onConfirm,
 }: {
-  hiveName: string;
   deleting: boolean;
   error: string | null;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const [confirmation, setConfirmation] = useState("");
-  const matchesName = confirmation.trim().toLocaleLowerCase() === hiveName.trim().toLocaleLowerCase();
-
   return (
     <div className="space-y-3">
-      <TextInput
-        value={confirmation}
-        onChange={(event) => setConfirmation(event.target.value)}
-        aria-label="Confirme o nome da colmeia"
-        placeholder="Nome da colmeia"
-        autoFocus
-      />
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       <div className="flex justify-end gap-2 pt-1">
         <button type="button" onClick={onCancel} disabled={deleting} className="rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100">
           Cancelar
         </button>
-        <button type="button" onClick={onConfirm} disabled={!matchesName || deleting} className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">
-          {deleting ? "Excluindo..." : "Excluir permanentemente"}
+        <button type="button" onClick={onConfirm} disabled={deleting} className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">
+          {deleting ? "Excluindo..." : "Confirmar exclusão"}
         </button>
       </div>
     </div>
@@ -525,7 +522,7 @@ function NewInspectionModal({
 }: {
   hiveId: string;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (notice: SaveNotice) => void;
 }) {
   const [health, setHealth] = useState<HealthLevel>("boa");
   const [queenSeen, setQueenSeen] = useState("true");
@@ -552,10 +549,19 @@ function NewInspectionModal({
       });
 
       if (photoFile) {
-        await uploadInspectionPhoto(inspection.id, photoFile);
+        try {
+          await uploadInspectionPhoto(inspection.id, photoFile);
+          onCreated({ type: "success", text: "Inspeção e foto salvas com sucesso." });
+        } catch (photoError) {
+          console.warn("Falha ao enviar a foto da inspeção:", photoError);
+          onCreated({
+            type: "warning",
+            text: "Inspeção salva, mas não foi possível enviar a foto. Você pode tentar novamente mais tarde.",
+          });
+        }
+      } else {
+        onCreated({ type: "success", text: "Inspeção registrada com sucesso." });
       }
-
-      onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível salvar.");
     } finally {
@@ -639,7 +645,7 @@ function NewHarvestModal({
   hiveId: string;
   products: Product[];
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (notice: SaveNotice) => void;
 }) {
   const [productId, setProductId] = useState(String(products[0]?.id ?? ""));
   const [quantity, setQuantity] = useState("");
@@ -662,7 +668,7 @@ function NewHarvestModal({
         unit: unit || null,
         quality_notes: notes || null,
       });
-      onCreated();
+      onCreated({ type: "success", text: "Colheita registrada com sucesso." });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível salvar.");
     } finally {

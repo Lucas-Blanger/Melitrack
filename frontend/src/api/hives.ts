@@ -43,10 +43,6 @@ export function listHivePhotos(hiveId: string) {
 }
 
 export function createHive(body: HiveCreate, file?: File) {
-  if (!file) {
-    return postJson<Hive>("/hives", body);
-  }
-
   const formData = new FormData();
   formData.append("name", body.name);
   formData.append("type", body.type);
@@ -63,8 +59,14 @@ export function createHive(body: HiveCreate, file?: File) {
   if (body.notes) {
     formData.append("notes", body.notes);
   }
-  formData.append("file", file);
+  if (file) formData.append("file", file);
   return postFormData<Hive>("/hives", formData);
+}
+
+export function uploadHivePhoto(hiveId: string, file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return postFormData(`/hives/${hiveId}/photos`, formData);
 }
 
 export function listInspectionsByHive(hiveId: string) {
